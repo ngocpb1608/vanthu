@@ -25,7 +25,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# ---------------- Models ----------------
+# ================= Models =================
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -34,7 +34,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, pwd: str):
-        # Tránh scrypt trên macOS: dùng pbkdf2:sha256
+        # Tránh scrypt: dùng pbkdf2:sha256 (tương thích)
         self.password_hash = generate_password_hash(pwd, method='pbkdf2:sha256')
 
     def check_password(self, pwd: str) -> bool:
@@ -85,7 +85,7 @@ def bootstrap():
 with app.app_context():
     bootstrap()
 
-# ---------------- Auth ----------------
+# ================= Auth =================
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -107,7 +107,7 @@ def quick_login():
 def logout():
     logout_user(); flash('Đã đăng xuất.','success'); return redirect(url_for('login'))
 
-# ---------------- Query helper ----------------
+# ================= Query helper =================
 def _query_congvan_from_request():
     q = CongVan.query
     ma = request.args.get('ma','').strip()
@@ -124,7 +124,7 @@ def _query_congvan_from_request():
     if tinh_trang: q = q.filter_by(tinh_trang=tinh_trang)
     return q
 
-# ---------------- Dashboard (root) ----------------
+# ================= Dashboard (root) =================
 @app.route('/')
 @login_required
 def dashboard():
@@ -133,7 +133,7 @@ def dashboard():
     items = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
     return render_template('dashboard.html', dang_giai_quyet=dang_giai_quyet, chua_lay=chua_lay, items=items)
 
-# ---------------- CRUD ----------------
+# ================= CRUD =================
 @app.route('/congvan/new', methods=['GET','POST'])
 @login_required
 def congvan_new():
@@ -193,7 +193,7 @@ def congvan_delete(id):
         flash('Bạn không có quyền xoá công văn này.','error'); return redirect(url_for('dashboard'))
     db.session.delete(item); db.session.commit(); flash('Đã xoá công văn.','success'); return redirect(url_for('dashboard'))
 
-# ---------------- Export Excel (openpyxl) ----------------
+# ================= Export Excel (openpyxl) =================
 @app.route('/export')
 @login_required
 def export_excel():
@@ -234,6 +234,28 @@ def export_excel():
         download_name='congvan.xlsx',
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+# ================= Quản lý người dùng (Admin) =================
+@app.route('/users', methods=['GET', 'POST'])
+@admin_required
+def users():
+    if request.method == 'POST':
+        username = request.form.get('username','').strip()
+        password = request.form.get('password','')
+        role = request.form.get('role','staff')
+        if not username or not password:
+            flash('Thiếu tài khoản hoặc mật khẩu.', 'error')
+            return redirect(url_for('users'))
+        if User.query.filter_by(username=username).first():
+            flash('Tài khoản đã tồn tại.', 'error')
+            return redirect(url_for('users'))
+        u = User(username=username, role=role)
+        u.set_password(password)
+        db.session.add(u); db.session.commit()
+        flash('Đã tạo người dùng.', 'success')
+        return redirect(url_for('users'))
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('users.html', users=users)
 
 @app.errorhandler(404)
 def e404(e): return render_template('error.html', code=404, message='Không tìm thấy trang'), 404
