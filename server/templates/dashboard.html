@@ -2,140 +2,108 @@
 {% block content %}
 
 <div class="grid md:grid-cols-2 gap-6 mb-6">
-  <div class="card">
+  <div class="bg-white rounded-2xl shadow p-6">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-xl font-bold">Đang giải quyết</h2>
     </div>
     <div class="overflow-x-auto">
-      <table class="table">
-        <thead><tr><th class="th">Mã</th><th class="th">Tên</th><th class="th">Địa chỉ</th><th class="th">Nhân viên</th></tr></thead>
+      <table class="min-w-full text-sm">
+        <thead><tr><th class="text-left text-gray-500 font-semibold pb-3">Mã</th><th class="text-left text-gray-500 font-semibold pb-3">Tên</th><th class="text-left text-gray-500 font-semibold pb-3">Địa chỉ</th><th class="text-left text-gray-500 font-semibold pb-3">Nhân viên</th></tr></thead>
         <tbody>
           {% for r in dang_giai_quyet %}
-          <tr>
-            <td class="td font-medium">{{ r.ma }}</td>
-            <td class="td">{{ r.ten }}</td>
-            <td class="td">{{ r.dia_chi }}</td>
-            <td class="td">{{ r.nhan_vien }}</td>
-          </tr>
-          {% else %}
-          <tr><td class="td" colspan="4">Không có dữ liệu.</td></tr>
-          {% endif %}
+          <tr class="border-t"><td class="py-2 font-medium">{{ r.ma }}</td><td class="py-2">{{ r.ten }}</td><td class="py-2">{{ r.dia_chi }}</td><td class="py-2">{{ r.nhan_vien }}</td></tr>
+          {% else %}<tr class="border-t"><td class="py-2" colspan="4">Không có dữ liệu.</td></tr>{% endif %}
         </tbody>
       </table>
     </div>
   </div>
 
-  <div class="card">
+  <div class="bg-white rounded-2xl shadow p-6">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-xl font-bold">NV chưa lấy đơn</h2>
     </div>
     <div class="overflow-x-auto">
-      <table class="table">
-        <thead><tr><th class="th">Mã</th><th class="th">Tên</th><th class="th">Địa chỉ</th><th class="th">Nhân viên</th></tr></thead>
+      <table class="min-w-full text-sm">
+        <thead><tr><th class="text-left text-gray-500 font-semibold pb-3">Mã</th><th class="text-left text-gray-500 font-semibold pb-3">Tên</th><th class="text-left text-gray-500 font-semibold pb-3">Địa chỉ</th><th class="text-left text-gray-500 font-semibold pb-3">Nhân viên</th></tr></thead>
         <tbody>
           {% for r in chua_lay %}
-          <tr>
-            <td class="td font-medium">{{ r.ma }}</td>
-            <td class="td">{{ r.ten }}</td>
-            <td class="td">{{ r.dia_chi }}</td>
-            <td class="td">{{ r.nhan_vien }}</td>
-          </tr>
-          {% else %}
-          <tr><td class="td" colspan="4">Không có dữ liệu.</td></tr>
-          {% endif %}
+          <tr class="border-t"><td class="py-2 font-medium">{{ r.ma }}</td><td class="py-2">{{ r.ten }}</td><td class="py-2">{{ r.dia_chi }}</td><td class="py-2">{{ r.nhan_vien }}</td></tr>
+          {% else %}<tr class="border-t"><td class="py-2" colspan="4">Không có dữ liệu.</td></tr>{% endif %}
         </tbody>
       </table>
     </div>
   </div>
 </div>
 
-<div class="card mb-6">
+<div class="bg-white rounded-2xl shadow p-6 mb-6">
   <form class="grid md:grid-cols-7 gap-3" method="get" action="{{ url_for('dashboard') }}">
-    <div>
-      <label class="label">Mã</label>
-      <input class="input" name="ma" value="{{ request.args.get('ma','') }}" />
-    </div>
-    <div>
-      <label class="label">Tên</label>
-      <input class="input" name="ten" value="{{ request.args.get('ten','') }}" />
-    </div>
-    <div>
-      <label class="label">Địa chỉ</label>
-      <input class="input" name="dia_chi" value="{{ request.args.get('dia_chi','') }}" />
-    </div>
-    <div>
-      <label class="label">Tháng</label>
-      <input class="input" name="thang" type="number" min="1" max="12" value="{{ request.args.get('thang','') }}" />
-    </div>
-    <div>
-      <label class="label">Năm</label>
-      <input class="input" name="nam" type="number" value="{{ request.args.get('nam','') }}" />
-    </div>
-    <div>
-      <label class="label">Tình trạng</label>
-      <select class="select" name="tinh_trang">
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Mã</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="ma" value="{{ request.args.get('ma','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Tên</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="ten" value="{{ request.args.get('ten','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="dia_chi" value="{{ request.args.get('dia_chi','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Tháng</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="thang" type="number" min="1" max="12" value="{{ request.args.get('thang','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Năm</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="nam" type="number" value="{{ request.args.get('nam','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Tình trạng</label>
+      <select class="w-full rounded-xl border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" name="tinh_trang">
         <option value="">--Tất cả--</option>
         {% for st in ['NV chưa lấy đơn','Đang giải quyết','Hoàn Thành'] %}
           <option value="{{ st }}" {% if request.args.get('tinh_trang') == st %}selected{% endif %}>{{ st }}</option>
         {% endfor %}
       </select>
     </div>
-    <div class="flex items-end">
-      <button class="btn btn-soft w-full" type="submit">Tìm kiếm</button>
-    </div>
+    <div class="flex items-end"><button class="w-full inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" type="submit">Tìm kiếm</button></div>
   </form>
-  <div class="flex items-center gap-2 mt-2">
-    <a class="btn btn-primary" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
-    <a class="btn btn-soft" href="{{ url_for('export_excel', **request.args) }}">Xuất Excel</a>
+  <div class="flex items-center gap-2 mt-3">
+    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" href="{{ url_for('export_excel', **request.args) }}">Xuất Excel</a>
   </div>
 </div>
 
-<div class="card">
+<div class="bg-white rounded-2xl shadow p-6">
   <div class="overflow-x-auto">
-    <table class="table">
+    <table class="min-w-full text-sm">
       <thead>
         <tr>
-          <th class="th">Mã</th>
-          <th class="th">Loại</th>
-          <th class="th">Tháng/Năm</th>
-          <th class="th">Mã KH</th>
-          <th class="th">Tên</th>
-          <th class="th">Địa chỉ</th>
-          <th class="th">Nhân viên</th>
-          <th class="th">Tình trạng</th>
-          <th class="th text-right">Hành động</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Mã</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Loại</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Tháng/Năm</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Mã KH</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Tên</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Địa chỉ</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Nhân viên</th>
+          <th class="text-left text-gray-500 font-semibold pb-3">Tình trạng</th>
+          <th class="text-right text-gray-500 font-semibold pb-3">Hành động</th>
         </tr>
       </thead>
       <tbody>
         {% for r in items %}
-        <tr>
-          <td class="td font-semibold">{{ r.ma }}</td>
-          <td class="td">{{ r.loai_don_thu }}</td>
-          <td class="td">{{ r.thang or '' }}/{{ r.nam or '' }}</td>
-          <td class="td">{{ r.ma_kh }}</td>
-          <td class="td">{{ r.ten }}</td>
-          <td class="td">{{ r.dia_chi }}</td>
-          <td class="td">{{ r.nhan_vien }}</td>
-          <td class="td">
+        <tr class="border-t">
+          <td class="py-2 font-semibold">{{ r.ma }}</td>
+          <td class="py-2">{{ r.loai_don_thu }}</td>
+          <td class="py-2">{{ r.thang or '' }}/{{ r.nam or '' }}</td>
+          <td class="py-2">{{ r.ma_kh }}</td>
+          <td class="py-2">{{ r.ten }}</td>
+          <td class="py-2">{{ r.dia_chi }}</td>
+          <td class="py-2">{{ r.nhan_vien }}</td>
+          <td class="py-2">
             {% if r.tinh_trang == 'NV chưa lấy đơn' %}
-              <span class="badge badge-wait">{{ r.tinh_trang }}</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{{ r.tinh_trang }}</span>
             {% elif r.tinh_trang == 'Đang giải quyết' %}
-              <span class="badge badge-progress">{{ r.tinh_trang }}</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ r.tinh_trang }}</span>
             {% else %}
-              <span class="badge badge-done">{{ r.tinh_trang }}</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ r.tinh_trang }}</span>
             {% endif %}
           </td>
-          <td class="td">
+          <td class="py-2">
             <div class="flex justify-end gap-2">
-              <a class="btn btn-soft" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
+              <a class="inline-flex items-center px-3 py-1.5 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
               <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" onsubmit="return confirm('Xoá công văn này?')">
-                <button class="btn btn-soft" type="submit">Xoá</button>
+                <button class="inline-flex items-center px-3 py-1.5 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" type="submit">Xoá</button>
               </form>
             </div>
           </td>
         </tr>
         {% else %}
-        <tr><td class="td" colspan="9">Không có dữ liệu.</td></tr>
+        <tr class="border-t"><td class="py-2" colspan="9">Không có dữ liệu.</td></tr>
         {% endif %}
       </tbody>
     </table>
