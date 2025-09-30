@@ -1,4 +1,3 @@
-cat > server/__init__.py <<'PY'
 import os
 from datetime import datetime
 from functools import wraps
@@ -34,7 +33,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, pwd: str):
-        # Tránh scrypt: dùng pbkdf2:sha256 (tương thích)
+        # Tránh lỗi scrypt trên mac: dùng pbkdf2:sha256
         self.password_hash = generate_password_hash(pwd, method='pbkdf2:sha256')
 
     def check_password(self, pwd: str) -> bool:
@@ -265,4 +264,3 @@ def e500(e): return render_template('error.html', code=500, message='Lỗi máy 
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5050)))
-PY
