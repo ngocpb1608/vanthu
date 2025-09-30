@@ -1,42 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="grid md:grid-cols-2 gap-6">
-  <div class="card">
+  <div class="bg-white rounded-2xl shadow p-6">
     <h2 class="text-xl font-bold mb-3">Tạo tài khoản</h2>
     <form method="post" class="space-y-3">
-      <div>
-        <label class="label">Tài khoản</label>
-        <input class="input" name="username" required />
-      </div>
-      <div>
-        <label class="label">Mật khẩu</label>
-        <input class="input" type="password" name="password" required />
-      </div>
-      <div>
-        <label class="label">Vai trò</label>
-        <select class="select" name="role">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Tài khoản</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="username" required /></div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" type="password" name="password" required /></div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
+        <select class="w-full rounded-xl border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" name="role">
           <option value="staff">Nhân viên</option>
           <option value="admin">Admin</option>
         </select>
       </div>
-      <button class="btn btn-primary" type="submit">Tạo</button>
+      <button class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700" type="submit">Tạo</button>
     </form>
   </div>
 
-  <div class="card">
+  <div class="bg-white rounded-2xl shadow p-6">
     <h2 class="text-xl font-bold mb-3">Danh sách người dùng</h2>
     <div class="overflow-x-auto">
-      <table class="table">
-        <thead><tr><th class="th">Tài khoản</th><th class="th">Vai trò</th><th class="th">Ngày tạo</th></tr></thead>
+      <table class="min-w-full text-sm">
+        <thead><tr><th class="text-left text-gray-500 font-semibold pb-3">Tài khoản</th><th class="text-left text-gray-500 font-semibold pb-3">Vai trò</th><th class="text-left text-gray-500 font-semibold pb-3">Ngày tạo</th></tr></thead>
         <tbody>
           {% for u in users %}
-            <tr>
-              <td class="td font-medium">{{ u.username }}</td>
-              <td class="td">{{ u.role }}</td>
-              <td class="td">{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-            </tr>
+            <tr class="border-t"><td class="py-2 font-medium">{{ u.username }}</td><td class="py-2">{{ u.role }}</td><td class="py-2">{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
           {% else %}
-            <tr><td class="td" colspan="3">Chưa có người dùng.</td></tr>
+            <tr class="border-t"><td class="py-2" colspan="3">Chưa có người dùng.</td></tr>
           {% endfor %}
         </tbody>
       </table>
