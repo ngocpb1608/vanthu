@@ -1,0 +1,222 @@
+
+import os
+from datetime import datetime
+from functools import wraps
+
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+
+import io
+import pandas as pd
+from datetime import datetime as _dt
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
+
+db_url = os.getenv('DATABASE_URL', 'sqlite:///data.db')
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+# ---------------- Models ----------------
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default='staff')  # 'admin' | 'staff'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, pwd: str):
+        # Force PBKDF2 (compatible với mọi bản Python, tránh lỗi hashlib.scrypt)
+        self.password_hash = generate_password_hash(pwd, method='pbkdf2:sha256')
+
+    def check_password(self, pwd: str) -> bool:
+        return check_password_hash(self.password_hash, pwd)
+
+class CongVan(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ma = db.Column(db.String(50), unique=True, nullable=False)
+    loai_don_thu = db.Column(db.String(120), nullable=True)
+    thang = db.Column(db.Integer, nullable=True)
+    nam = db.Column(db.Integer, nullable=True)
+    ma_kh = db.Column(db.String(50), nullable=True)
+    ten = db.Column(db.String(200), nullable=False)
+    dia_chi = db.Column(db.String(300), nullable=True)
+    nhan_vien = db.Column(db.String(120), nullable=True)
+    noi_dung = db.Column(db.Text, nullable=True)
+    ngay_nv_nhan = db.Column(db.Date, nullable=True)
+    tinh_trang = db.Column(db.String(50), default='NV chưa lấy đơn')  # NV chưa lấy đơn | Đang giải quyết | Hoàn Thành
+    ghi_chu = db.Column(db.Text, nullable=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            flash('Chức năng này chỉ dành cho ADMIN.', 'error')
+            return redirect(url_for('dashboard'))
+        return view(*args, **kwargs)
+    return wrapped
+
+def bootstrap():
+    db.create_all()
+    if User.query.count() == 0:
+        admin = User(username=os.getenv('DEFAULT_ADMIN_USERNAME', 'admin'))
+        admin.set_password(os.getenv('DEFAULT_ADMIN_PASSWORD', 'admin123'))
+        admin.role='admin'
+        staff = User(username=os.getenv('DEFAULT_STAFF_USERNAME', 'nhanvien'))
+        staff.set_password(os.getenv('DEFAULT_STAFF_PASSWORD', 'nhanvien123'))
+        staff.role='staff'
+        db.session.add_all([admin, staff]); db.session.commit()
+
+with app.app_context():
+    bootstrap()
+
+# ---- Auth ----
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        u = User.query.filter_by(username=request.form.get('username','').strip()).first()
+        if u and u.check_password(request.form.get('password','')):
+            login_user(u); flash('Đăng nhập thành công.','success'); return redirect(url_for('dashboard'))
+        flash('Sai tài khoản hoặc mật khẩu.','error')
+    return render_template('login.html')
+
+@app.route('/quick-login')
+def quick_login():
+    u = User.query.filter_by(username='quick_staff').first()
+    if not u:
+        u = User(username='quick_staff', role='staff'); u.set_password('quick'); db.session.add(u); db.session.commit()
+    login_user(u); flash('Đăng nhập nhanh với quyền Nhân viên.','success'); return redirect(url_for('dashboard'))
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user(); flash('Đã đăng xuất.','success'); return redirect(url_for('login'))
+
+# ---- Query helper ----
+def _query_congvan_from_request():
+    q = CongVan.query
+    ma = request.args.get('ma','').strip()
+    ten = request.args.get('ten','').strip()
+    dia_chi = request.args.get('dia_chi','').strip()
+    thang = request.args.get('thang','').strip()
+    nam = request.args.get('nam','').strip()
+    tinh_trang = request.args.get('tinh_trang','').strip()
+    if ma: q = q.filter(CongVan.ma.ilike(f"%{ma}%"))
+    if ten: q = q.filter(CongVan.ten.ilike(f"%{ten}%"))
+    if dia_chi: q = q.filter(CongVan.dia_chi.ilike(f"%{dia_chi}%"))
+    if thang.isdigit(): q = q.filter_by(thang=int(thang))
+    if nam.isdigit(): q = q.filter_by(nam=int(nam))
+    if tinh_trang: q = q.filter_by(tinh_trang=tinh_trang)
+    return q
+
+# ---- Dashboard (root) ----
+@app.route('/')
+@login_required
+def dashboard():
+    dang_giai_quyet = CongVan.query.filter_by(tinh_trang='Đang giải quyết').all()
+    chua_lay = CongVan.query.filter_by(tinh_trang='NV chưa lấy đơn').all()
+    items = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
+    return render_template('dashboard.html', dang_giai_quyet=dang_giai_quyet, chua_lay=chua_lay, items=items)
+
+# ---- CRUD ----
+@app.route('/congvan/new', methods=['GET','POST'])
+@login_required
+def congvan_new():
+    if request.method == 'POST':
+        try:
+            ngay = request.form.get('ngay_nv_nhan') or None
+            ngay = _dt.strptime(ngay, "%Y-%m-%d").date() if ngay else None
+            cv = CongVan(
+                ma=request.form['ma'].strip(),
+                loai_don_thu=request.form.get('loai_don_thu','').strip(),
+                thang=int(request.form.get('thang')) if request.form.get('thang') else None,
+                nam=int(request.form.get('nam')) if request.form.get('nam') else None,
+                ma_kh=request.form.get('ma_kh','').strip(),
+                ten=request.form.get('ten','').strip(),
+                dia_chi=request.form.get('dia_chi','').strip(),
+                nhan_vien=request.form.get('nhan_vien','').strip(),
+                noi_dung=request.form.get('noi_dung','').strip(),
+                ngay_nv_nhan=ngay,
+                tinh_trang=request.form.get('tinh_trang','NV chưa lấy đơn'),
+                ghi_chu=request.form.get('ghi_chu','').strip(),
+                created_by_id=current_user.id
+            )
+            db.session.add(cv); db.session.commit(); flash('Đã thêm công văn.','success'); return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback(); flash(f'Lỗi: {e}','error')
+    return render_template('congvan_form.html', mode='new', item=None)
+
+@app.route('/congvan/<int:id>/edit', methods=['GET','POST'])
+@login_required
+def congvan_edit(id):
+    item = CongVan.query.get_or_404(id)
+    if request.method == 'POST':
+        try:
+            item.ma = request.form['ma'].strip()
+            item.loai_don_thu = request.form.get('loai_don_thu','').strip()
+            item.thang = int(request.form.get('thang')) if request.form.get('thang') else None
+            item.nam = int(request.form.get('nam')) if request.form.get('nam') else None
+            item.ma_kh = request.form.get('ma_kh','').strip()
+            item.ten = request.form.get('ten','').strip()
+            item.dia_chi = request.form.get('dia_chi','').strip()
+            item.nhan_vien = request.form.get('nhan_vien','').strip()
+            item.noi_dung = request.form.get('noi_dung','').strip()
+            ngay = request.form.get('ngay_nv_nhan') or None
+            item.ngay_nv_nhan = _dt.strptime(ngay, "%Y-%m-%d").date() if ngay else None
+            item.tinh_trang = request.form.get('tinh_trang','NV chưa lấy đơn')
+            item.ghi_chu = request.form.get('ghi_chu','').strip()
+            db.session.commit(); flash('Đã cập nhật công văn.','success'); return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback(); flash(f'Lỗi: {e}','error')
+    return render_template('congvan_form.html', mode='edit', item=item)
+
+@app.route('/congvan/<int:id>/delete', methods=['POST'])
+@login_required
+def congvan_delete(id):
+    item = CongVan.query.get_or_404(id)
+    if current_user.role != 'admin' and item.created_by_id != current_user.id:
+        flash('Bạn không có quyền xoá công văn này.','error'); return redirect(url_for('dashboard'))
+    db.session.delete(item); db.session.commit(); flash('Đã xoá công văn.','success'); return redirect(url_for('dashboard'))
+
+@app.route('/export')
+@login_required
+def export_excel():
+    rows = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
+    data = [{
+        'Mã': r.ma, 'Loại đơn thư': r.loai_don_thu, 'Tháng': r.thang, 'Năm': r.nam, 'Mã KH': r.ma_kh,
+        'Tên': r.ten, 'Địa chỉ': r.dia_chi, 'Nhân viên': r.nhan_vien, 'Nội dung đơn': r.noi_dung,
+        'Ngày NV nhận đơn': r.ngay_nv_nhan.isoformat() if r.ngay_nv_nhan else '',
+        'Tình trạng xử lý': r.tinh_trang, 'Ghi chú': r.ghi_chu,
+        'Ngày tạo': r.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'Ngày sửa': r.updated_at.strftime('%Y-%m-%d %H:%M:%S') if r.updated_at else ''
+    } for r in rows]
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        pd.DataFrame(data).to_excel(writer, index=False, sheet_name='CongVan')
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name='congvan.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+@app.errorhandler(404)
+def e404(e): return render_template('error.html', code=404, message='Không tìm thấy trang'), 404
+
+@app.errorhandler(500)
+def e500(e): return render_template('error.html', code=500, message='Lỗi máy chủ'), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5050)))

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="grid md:grid-cols-2 gap-6 mb-6">
+  <div class="card">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xl font-bold">Đang giải quyết</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead><tr><th class="th">Mã</th><th class="th">Tên</th><th class="th">Địa chỉ</th><th class="th">Nhân viên</th></tr></thead>
+        <tbody>
+          {% for r in dang_giai_quyet %}
+          <tr>
+            <td class="td font-medium">{{ r.ma }}</td>
+            <td class="td">{{ r.ten }}</td>
+            <td class="td">{{ r.dia_chi }}</td>
+            <td class="td">{{ r.nhan_vien }}</td>
+          </tr>
+          {% else %}
+          <tr><td class="td" colspan="4">Không có dữ liệu.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xl font-bold">NV chưa lấy đơn</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead><tr><th class="th">Mã</th><th class="th">Tên</th><th class="th">Địa chỉ</th><th class="th">Nhân viên</th></tr></thead>
+        <tbody>
+          {% for r in chua_lay %}
+          <tr>
+            <td class="td font-medium">{{ r.ma }}</td>
+            <td class="td">{{ r.ten }}</td>
+            <td class="td">{{ r.dia_chi }}</td>
+            <td class="td">{{ r.nhan_vien }}</td>
+          </tr>
+          {% else %}
+          <tr><td class="td" colspan="4">Không có dữ liệu.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <form class="grid md:grid-cols-7 gap-3" method="get" action="{{ url_for('dashboard') }}">
+    <div>
+      <label class="label">Mã</label>
+      <input class="input" name="ma" value="{{ request.args.get('ma','') }}" />
+    </div>
+    <div>
+      <label class="label">Tên</label>
+      <input class="input" name="ten" value="{{ request.args.get('ten','') }}" />
+    </div>
+    <div>
+      <label class="label">Địa chỉ</label>
+      <input class="input" name="dia_chi" value="{{ request.args.get('dia_chi','') }}" />
+    </div>
+    <div>
+      <label class="label">Tháng</label>
+      <input class="input" name="thang" type="number" min="1" max="12" value="{{ request.args.get('thang','') }}" />
+    </div>
+    <div>
+      <label class="label">Năm</label>
+      <input class="input" name="nam" type="number" value="{{ request.args.get('nam','') }}" />
+    </div>
+    <div>
+      <label class="label">Tình trạng</label>
+      <select class="select" name="tinh_trang">
+        <option value="">--Tất cả--</option>
+        {% for st in ['NV chưa lấy đơn','Đang giải quyết','Hoàn Thành'] %}
+          <option value="{{ st }}" {% if request.args.get('tinh_trang') == st %}selected{% endif %}>{{ st }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button class="btn btn-soft w-full" type="submit">Tìm kiếm</button>
+    </div>
+  </form>
+  <div class="flex items-center gap-2 mt-2">
+    <a class="btn btn-primary" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+    <a class="btn btn-soft" href="{{ url_for('export_excel', **request.args) }}">Xuất Excel</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="overflow-x-auto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="th">Mã</th>
+          <th class="th">Loại</th>
+          <th class="th">Tháng/Năm</th>
+          <th class="th">Mã KH</th>
+          <th class="th">Tên</th>
+          <th class="th">Địa chỉ</th>
+          <th class="th">Nhân viên</th>
+          <th class="th">Tình trạng</th>
+          <th class="th text-right">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td class="td font-semibold">{{ r.ma }}</td>
+          <td class="td">{{ r.loai_don_thu }}</td>
+          <td class="td">{{ r.thang or '' }}/{{ r.nam or '' }}</td>
+          <td class="td">{{ r.ma_kh }}</td>
+          <td class="td">{{ r.ten }}</td>
+          <td class="td">{{ r.dia_chi }}</td>
+          <td class="td">{{ r.nhan_vien }}</td>
+          <td class="td">
+            {% if r.tinh_trang == 'NV chưa lấy đơn' %}
+              <span class="badge badge-wait">{{ r.tinh_trang }}</span>
+            {% elif r.tinh_trang == 'Đang giải quyết' %}
+              <span class="badge badge-progress">{{ r.tinh_trang }}</span>
+            {% else %}
+              <span class="badge badge-done">{{ r.tinh_trang }}</span>
+            {% endif %}
+          </td>
+          <td class="td">
+            <div class="flex justify-end gap-2">
+              <a class="btn btn-soft" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
+              <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" onsubmit="return confirm('Xoá công văn này?')">
+                <button class="btn btn-soft" type="submit">Xoá</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="td" colspan="9">Không có dữ liệu.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

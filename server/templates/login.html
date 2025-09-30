@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="card">
+    <h1 class="text-2xl font-bold mb-4">Đăng nhập</h1>
+    <form method="post" class="space-y-4">
+      <div>
+        <label class="label">Tài khoản</label>
+        <input class="input" name="username" placeholder="vd: admin" required />
+      </div>
+      <div>
+        <label class="label">Mật khẩu</label>
+        <input class="input" type="password" name="password" placeholder="••••••••" required />
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" type="submit">Đăng nhập</button>
+        <a class="btn btn-soft" href="{{ url_for('quick_login') }}">Đăng nhập nhanh</a>
+      </div>
+      <p class="text-xs text-gray-500">Mặc định: <b>admin / admin123</b> (ADMIN), <b>nhanvien / nhanvien123</b> (Nhân viên).</p>
+    </form>
+  </div>
+</div>
+{% endblock %}

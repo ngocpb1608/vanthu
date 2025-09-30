@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-lg mx-auto card text-center">
+  <div class="text-6xl font-black mb-2">{{ code }}</div>
+  <div class="text-gray-600 mb-4">{{ message }}</div>
+  <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Về trang chủ</a>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid md:grid-cols-2 gap-6">
+  <div class="card">
+    <h2 class="text-xl font-bold mb-3">Tạo tài khoản</h2>
+    <form method="post" class="space-y-3">
+      <div>
+        <label class="label">Tài khoản</label>
+        <input class="input" name="username" required />
+      </div>
+      <div>
+        <label class="label">Mật khẩu</label>
+        <input class="input" type="password" name="password" required />
+      </div>
+      <div>
+        <label class="label">Vai trò</label>
+        <select class="select" name="role">
+          <option value="staff">Nhân viên</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit">Tạo</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="text-xl font-bold mb-3">Danh sách người dùng</h2>
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead><tr><th class="th">Tài khoản</th><th class="th">Vai trò</th><th class="th">Ngày tạo</th></tr></thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td class="td font-medium">{{ u.username }}</td>
+              <td class="td">{{ u.role }}</td>
+              <td class="td">{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+          {% else %}
+            <tr><td class="td" colspan="3">Chưa có người dùng.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
