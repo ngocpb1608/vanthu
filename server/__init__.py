@@ -1,4 +1,4 @@
-
+cat > server/__init__.py <<'PY'
 import os
 from datetime import datetime
 from functools import wraps
@@ -8,8 +8,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from openpyxl import Workbook
 import io
-import pandas as pd
 from datetime import datetime as _dt
 
 app = Flask(__name__)
@@ -34,7 +34,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, pwd: str):
-        # Force PBKDF2 (compatible với mọi bản Python, tránh lỗi hashlib.scrypt)
+        # Tránh scrypt trên macOS: dùng pbkdf2:sha256
         self.password_hash = generate_password_hash(pwd, method='pbkdf2:sha256')
 
     def check_password(self, pwd: str) -> bool:
@@ -43,18 +43,18 @@ class User(UserMixin, db.Model):
 class CongVan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ma = db.Column(db.String(50), unique=True, nullable=False)
-    loai_don_thu = db.Column(db.String(120), nullable=True)
-    thang = db.Column(db.Integer, nullable=True)
-    nam = db.Column(db.Integer, nullable=True)
-    ma_kh = db.Column(db.String(50), nullable=True)
+    loai_don_thu = db.Column(db.String(120))
+    thang = db.Column(db.Integer)
+    nam = db.Column(db.Integer)
+    ma_kh = db.Column(db.String(50))
     ten = db.Column(db.String(200), nullable=False)
-    dia_chi = db.Column(db.String(300), nullable=True)
-    nhan_vien = db.Column(db.String(120), nullable=True)
-    noi_dung = db.Column(db.Text, nullable=True)
-    ngay_nv_nhan = db.Column(db.Date, nullable=True)
+    dia_chi = db.Column(db.String(300))
+    nhan_vien = db.Column(db.String(120))
+    noi_dung = db.Column(db.Text)
+    ngay_nv_nhan = db.Column(db.Date)
     tinh_trang = db.Column(db.String(50), default='NV chưa lấy đơn')  # NV chưa lấy đơn | Đang giải quyết | Hoàn Thành
-    ghi_chu = db.Column(db.Text, nullable=True)
-    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    ghi_chu = db.Column(db.Text)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -76,16 +76,16 @@ def bootstrap():
     if User.query.count() == 0:
         admin = User(username=os.getenv('DEFAULT_ADMIN_USERNAME', 'admin'))
         admin.set_password(os.getenv('DEFAULT_ADMIN_PASSWORD', 'admin123'))
-        admin.role='admin'
+        admin.role = 'admin'
         staff = User(username=os.getenv('DEFAULT_STAFF_USERNAME', 'nhanvien'))
         staff.set_password(os.getenv('DEFAULT_STAFF_PASSWORD', 'nhanvien123'))
-        staff.role='staff'
+        staff.role = 'staff'
         db.session.add_all([admin, staff]); db.session.commit()
 
 with app.app_context():
     bootstrap()
 
-# ---- Auth ----
+# ---------------- Auth ----------------
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -107,7 +107,7 @@ def quick_login():
 def logout():
     logout_user(); flash('Đã đăng xuất.','success'); return redirect(url_for('login'))
 
-# ---- Query helper ----
+# ---------------- Query helper ----------------
 def _query_congvan_from_request():
     q = CongVan.query
     ma = request.args.get('ma','').strip()
@@ -124,7 +124,7 @@ def _query_congvan_from_request():
     if tinh_trang: q = q.filter_by(tinh_trang=tinh_trang)
     return q
 
-# ---- Dashboard (root) ----
+# ---------------- Dashboard (root) ----------------
 @app.route('/')
 @login_required
 def dashboard():
@@ -133,7 +133,7 @@ def dashboard():
     items = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
     return render_template('dashboard.html', dang_giai_quyet=dang_giai_quyet, chua_lay=chua_lay, items=items)
 
-# ---- CRUD ----
+# ---------------- CRUD ----------------
 @app.route('/congvan/new', methods=['GET','POST'])
 @login_required
 def congvan_new():
@@ -193,24 +193,47 @@ def congvan_delete(id):
         flash('Bạn không có quyền xoá công văn này.','error'); return redirect(url_for('dashboard'))
     db.session.delete(item); db.session.commit(); flash('Đã xoá công văn.','success'); return redirect(url_for('dashboard'))
 
+# ---------------- Export Excel (openpyxl) ----------------
 @app.route('/export')
 @login_required
 def export_excel():
     rows = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
-    data = [{
-        'Mã': r.ma, 'Loại đơn thư': r.loai_don_thu, 'Tháng': r.thang, 'Năm': r.nam, 'Mã KH': r.ma_kh,
-        'Tên': r.ten, 'Địa chỉ': r.dia_chi, 'Nhân viên': r.nhan_vien, 'Nội dung đơn': r.noi_dung,
-        'Ngày NV nhận đơn': r.ngay_nv_nhan.isoformat() if r.ngay_nv_nhan else '',
-        'Tình trạng xử lý': r.tinh_trang, 'Ghi chú': r.ghi_chu,
-        'Ngày tạo': r.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-        'Ngày sửa': r.updated_at.strftime('%Y-%m-%d %H:%M:%S') if r.updated_at else ''
-    } for r in rows]
+
+    headers = [
+        'Mã','Loại đơn thư','Tháng','Năm','Mã KH','Tên','Địa chỉ','Nhân viên',
+        'Nội dung đơn','Ngày NV nhận đơn','Tình trạng xử lý','Ghi chú',
+        'Ngày tạo','Ngày sửa'
+    ]
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "CongVan"
+    ws.append(headers)
+
+    for r in rows:
+        ws.append([
+            r.ma, r.loai_don_thu, r.thang, r.nam, r.ma_kh, r.ten, r.dia_chi, r.nhan_vien,
+            r.noi_dung,
+            r.ngay_nv_nhan.isoformat() if r.ngay_nv_nhan else '',
+            r.tinh_trang, r.ghi_chu,
+            r.created_at.strftime('%Y-%m-%d %H:%M:%S') if r.created_at else '',
+            r.updated_at.strftime('%Y-%m-%d %H:%M:%S') if r.updated_at else ''
+        ])
+
+    # Auto width đơn giản
+    for col in ws.columns:
+        max_len = max(len(str(c.value)) if c.value is not None else 0 for c in col)
+        ws.column_dimensions[col[0].column_letter].width = min(max(8, max_len + 2), 60)
+
     buf = io.BytesIO()
-    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
-        pd.DataFrame(data).to_excel(writer, index=False, sheet_name='CongVan')
+    wb.save(buf)
     buf.seek(0)
-    return send_file(buf, as_attachment=True, download_name='congvan.xlsx',
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name='congvan.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 @app.errorhandler(404)
 def e404(e): return render_template('error.html', code=404, message='Không tìm thấy trang'), 404
@@ -220,3 +243,4 @@ def e500(e): return render_template('error.html', code=500, message='Lỗi máy 
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5050)))
+PY
