@@ -47,6 +47,38 @@
     </div>
   </div>
 
+  <!-- THỐNG KÊ HOÀN THÀNH THEO LOẠI (THÁNG GẦN NHẤT) -->
+<div class="bg-white rounded-xl border p-4 mb-4">
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="text-lg font-semibold">Hoàn thành theo Loại đơn thư</h2>
+    {% if latest_thang and latest_nam %}
+      <div class="text-sm text-gray-600">Tháng {{ latest_thang }}/{{ latest_nam }}</div>
+    {% else %}
+      <div class="text-sm text-gray-600">Chưa có hồ sơ Hoàn Thành</div>
+    {% endif %}
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="text-left px-3 py-2 font-medium">Loại đơn thư</th>
+          <th class="text-right px-3 py-2 font-medium">Số lượng</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for loai, cnt in hoan_thanh_by_loai %}
+        <tr class="odd:bg-white even:bg-gray-50">
+          <td class="px-3 py-2">{{ loai }}</td>
+          <td class="px-3 py-2 text-right font-semibold">{{ cnt }}</td>
+        </tr>
+        {% else %}
+        <tr><td class="px-3 py-2" colspan="2">Không có dữ liệu.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
   <div class="card p-6">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-xl font-bold">NV chưa lấy đơn</h2>
