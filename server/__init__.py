@@ -115,12 +115,17 @@ def _query_congvan_from_request():
     thang = request.args.get('thang','').strip()
     nam = request.args.get('nam','').strip()
     tinh_trang = request.args.get('tinh_trang','').strip()
+    loai = request.args.get('loai','').strip()          # NEW
+    kw = request.args.get('q','').strip()               # NEW: keyword trong nội dung
+
     if ma: q = q.filter(CongVan.ma.ilike(f"%{ma}%"))
     if ten: q = q.filter(CongVan.ten.ilike(f"%{ten}%"))
     if dia_chi: q = q.filter(CongVan.dia_chi.ilike(f"%{dia_chi}%"))
     if thang.isdigit(): q = q.filter_by(thang=int(thang))
     if nam.isdigit(): q = q.filter_by(nam=int(nam))
     if tinh_trang: q = q.filter_by(tinh_trang=tinh_trang)
+    if loai: q = q.filter(CongVan.loai_don_thu.ilike(f"%{loai}%"))     # NEW
+    if kw: q = q.filter(CongVan.noi_dung.ilike(f"%{kw}%"))             # NEW
     return q
 
 # ================= Dashboard (root) =================
