@@ -159,6 +159,12 @@ def congvan_new():
         except Exception as e:
             db.session.rollback(); flash(f'Lỗi: {e}','error')
     return render_template('congvan_form.html', mode='new', item=None)
+    # ---------------- Chi tiết công văn (view-only) ----------------
+@app.route('/congvan/<int:id>')
+@login_required
+def congvan_detail(id):
+    item = CongVan.query.get_or_404(id)
+    return render_template('congvan_detail.html', item=item)
 
 @app.route('/congvan/<int:id>/edit', methods=['GET','POST'])
 @login_required
