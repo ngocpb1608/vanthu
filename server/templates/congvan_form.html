@@ -1,87 +1,98 @@
-{% extends "base.html" %}
+{% raw %}{% extends "base.html" %}
 {% block content %}
-<div class="max-w-3xl mx-auto bg-white rounded-2xl shadow p-6">
-  <h1 class="text-2xl font-bold mb-4">{% if mode == 'new' %}Thêm công văn{% else %}Sửa công văn{% endif %}</h1>
-  <form method="post" class="grid md:grid-cols-2 gap-4">
-  {% if mode == 'edit' %}
-<div>
-  <label class="block text-sm text-gray-600 mb-1">Mã công văn (tự sinh)</label>
-  <div class="px-3 py-2 rounded-xl border bg-gray-50 text-gray-700">{{ item.ma }}</div>
+<div class="max-w-3xl mx-auto">
+  <div class="card p-6">
+    <h1 class="text-xl font-bold mb-4">
+      {% if mode=='new' %}Thêm công văn{% else %}Sửa công văn{% endif %}
+    </h1>
+
+    {% if mode=='new' %}
+      <div class="mb-3 text-sm text-gray-600">
+        Mã công văn sẽ được <b>tự sinh</b> theo Tháng/Năm sau khi lưu (ví dụ: CV-202501-0001).
+      </div>
+    {% else %}
+      <div class="mb-3 text-sm">
+        Mã công văn: <span class="px-2 py-1 rounded-lg bg-gray-100 border">{{ item.ma }}</span>
+      </div>
+    {% endif %}
+
+    <form method="post" class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Loại đơn thư</label>
+        <input name="loai_don_thu" list="loai_list" value="{{ item.loai_don_thu if item else '' }}"
+               class="w-full rounded-xl border px-3 py-2" />
+        {% if loai_options %}
+        <datalist id="loai_list">
+          {% for opt in loai_options %}<option value="{{ opt }}"></option>{% endfor %}
+        </datalist>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Tháng</label>
+        <input name="thang" type="number" min="1" max="12"
+               value="{{ (item.thang if item and item.thang) or today.month }}"
+               class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Năm</label>
+        <input name="nam" type="number"
+               value="{{ (item.nam if item and item.nam) or today.year }}"
+               class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Mã KH</label>
+        <input name="ma_kh" value="{{ item.ma_kh if item else '' }}" class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Tên *</label>
+        <input name="ten" required value="{{ item.ten if item else '' }}" class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">Địa chỉ</label>
+        <input name="dia_chi" value="{{ item.dia_chi if item else '' }}" class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Nhân viên</label>
+        <input name="nhan_vien" value="{{ item.nhan_vien if item else '' }}" class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Ngày NV nhận</label>
+        <input type="date" name="ngay_nv_nhan"
+               value="{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item and item.ngay_nv_nhan else today.strftime('%Y-%m-%d') }}"
+               class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">Nội dung đơn</label>
+        <textarea name="noi_dung" rows="4" class="w-full rounded-xl border px-3 py-2">{{ item.noi_dung if item else '' }}</textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Tình trạng xử lý</label>
+        <select name="tinh_trang" class="w-full rounded-xl border px-3 py-2 bg-white">
+          {% for st in STATUS_CHOICES %}
+            <option value="{{ st }}" {% if item and item.tinh_trang==st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Ghi chú</label>
+        <input name="ghi_chu" value="{{ item.ghi_chu if item else '' }}" class="w-full rounded-xl border px-3 py-2" />
+      </div>
+
+      <div class="md:col-span-2 flex gap-2">
+        <button class="btn bg-indigo-600 text-white hover:bg-indigo-700" type="submit">Lưu</button>
+        <a class="btn bg-gray-100 hover:bg-gray-200" href="{{ url_for('dashboard') }}">Huỷ</a>
+      </div>
+    </form>
+  </div>
 </div>
-{% endif %}
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Loại đơn thư</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="loai_don_thu" value="{{ item.loai_don_thu if item else '' }}" />
-    </div>
-
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Tháng</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             type="number" min="1" max="12" name="thang"
-             value="{{ item.thang if item and item.thang else today.month }}" />
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Năm</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             type="number" name="nam"
-             value="{{ item.nam if item and item.nam else today.year }}" />
-    </div>
-
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Mã KH</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="ma_kh" value="{{ item.ma_kh if item else '' }}" />
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Tên *</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="ten" value="{{ item.ten if item else '' }}" required />
-    </div>
-
-    <div class="md:col-span-2">
-      <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="dia_chi" value="{{ item.dia_chi if item else '' }}" />
-    </div>
-
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Nhân viên</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="nhan_vien" value="{{ item.nhan_vien if item else '' }}" />
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Ngày NV nhận đơn</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             type="date" name="ngay_nv_nhan"
-             value="{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item and item.ngay_nv_nhan else today.strftime('%Y-%m-%d') }}" />
-    </div>
-
-    <div class="md:col-span-2">
-      <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung đơn</label>
-      <textarea class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                name="noi_dung" rows="4">{{ item.noi_dung if item else '' }}</textarea>
-    </div>
-
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Tình trạng xử lý</label>
-      <select class="w-full rounded-xl border border-gray-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              name="tinh_trang">
-        {% for st in ['NV chưa lấy đơn', 'Đang giải quyết', 'Hoàn Thành'] %}
-          <option value="{{ st }}" {% if item and item.tinh_trang == st %}selected{% endif %}>{{ st }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="ghi_chu" value="{{ item.ghi_chu if item else '' }}" />
-    </div>
-
-    <div class="md:col-span-2 flex gap-2">
-      <button class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700" type="submit">Lưu</button>
-      <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" href="{{ url_for('dashboard') }}">Huỷ</a>
-    </div>
-  </form>
-</div>
-{% endblock %}
+{% endblock %}{% endraw %}
