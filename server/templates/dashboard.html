@@ -1,34 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!-- Hai bảng thống kê -->
 <div class="grid md:grid-cols-2 gap-6 mb-6">
   <!-- Đang giải quyết -->
   <div class="bg-white rounded-2xl shadow p-6">
     <h2 class="text-xl font-bold mb-3">Đang giải quyết</h2>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto rounded-lg border">
       <table class="min-w-full text-sm">
-        <thead>
+        <thead class="bg-gray-100 text-gray-700">
           <tr>
-            <th class="text-left text-gray-500 font-semibold pb-3">Mã</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Loại</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Tên</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Nội dung</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Nhân viên</th>
+            <th class="text-left font-semibold px-3 py-2">Mã</th>
+            <th class="text-left font-semibold px-3 py-2">Loại</th>
+            <th class="text-left font-semibold px-3 py-2">Tên</th>
+            <th class="text-left font-semibold px-3 py-2">Nội dung</th>
+            <th class="text-left font-semibold px-3 py-2">Nhân viên</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y">
           {% for r in dang_giai_quyet %}
-            <tr class="border-t">
-              <td class="py-2 font-medium">
+            <tr class="odd:bg-white even:bg-gray-50">
+              <td class="px-3 py-2 font-medium">
                 <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-indigo-600 hover:underline">{{ r.ma }}</a>
               </td>
-              <td class="py-2">{{ r.loai_don_thu }}</td>
-              <td class="py-2">{{ r.ten }}</td>
-              <td class="py-2 max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">{{ r.noi_dung }}</td>
-              <td class="py-2">{{ r.nhan_vien }}</td>
+              <td class="px-3 py-2">{{ r.loai_don_thu }}</td>
+              <td class="px-3 py-2">{{ r.ten }}</td>
+              <td class="px-3 py-2 max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">{{ r.noi_dung }}</td>
+              <td class="px-3 py-2">{{ r.nhan_vien }}</td>
             </tr>
           {% else %}
-            <tr class="border-t"><td class="py-2" colspan="5">Không có dữ liệu.</td></tr>
+            <tr><td class="px-3 py-2" colspan="5">Không có dữ liệu.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -38,30 +39,30 @@
   <!-- NV chưa lấy đơn -->
   <div class="bg-white rounded-2xl shadow p-6">
     <h2 class="text-xl font-bold mb-3">NV chưa lấy đơn</h2>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto rounded-lg border">
       <table class="min-w-full text-sm">
-        <thead>
+        <thead class="bg-gray-100 text-gray-700">
           <tr>
-            <th class="text-left text-gray-500 font-semibold pb-3">Mã</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Loại</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Tên</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Nội dung</th>
-            <th class="text-left text-gray-500 font-semibold pb-3">Nhân viên</th>
+            <th class="text-left font-semibold px-3 py-2">Mã</th>
+            <th class="text-left font-semibold px-3 py-2">Loại</th>
+            <th class="text-left font-semibold px-3 py-2">Tên</th>
+            <th class="text-left font-semibold px-3 py-2">Nội dung</th>
+            <th class="text-left font-semibold px-3 py-2">Nhân viên</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y">
           {% for r in chua_lay %}
-            <tr class="border-t">
-              <td class="py-2 font-medium">
+            <tr class="odd:bg-white even:bg-gray-50">
+              <td class="px-3 py-2 font-medium">
                 <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-indigo-600 hover:underline">{{ r.ma }}</a>
               </td>
-              <td class="py-2">{{ r.loai_don_thu }}</td>
-              <td class="py-2">{{ r.ten }}</td>
-              <td class="py-2 max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">{{ r.noi_dung }}</td>
-              <td class="py-2">{{ r.nhan_vien }}</td>
+              <td class="px-3 py-2">{{ r.loai_don_thu }}</td>
+              <td class="px-3 py-2">{{ r.ten }}</td>
+              <td class="px-3 py-2 max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">{{ r.noi_dung }}</td>
+              <td class="px-3 py-2">{{ r.nhan_vien }}</td>
             </tr>
           {% else %}
-            <tr class="border-t"><td class="py-2" colspan="5">Không có dữ liệu.</td></tr>
+            <tr><td class="px-3 py-2" colspan="5">Không có dữ liệu.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -69,12 +70,14 @@
   </div>
 </div>
 
-<!-- Bộ lọc + Xuất Excel -->
+<!-- Bộ lọc tìm kiếm + Xuất Excel -->
 <div class="bg-white rounded-2xl shadow p-6 mb-6">
-  <form class="grid md:grid-cols-8 gap-3" method="get" action="{{ url_for('dashboard') }}">
+  <form class="grid md:grid-cols-10 gap-3" method="get" action="{{ url_for('dashboard') }}">
     <div><label class="block text-sm font-medium text-gray-700 mb-1">Mã</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="ma" value="{{ request.args.get('ma','') }}" /></div>
     <div><label class="block text-sm font-medium text-gray-700 mb-1">Tên</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="ten" value="{{ request.args.get('ten','') }}" /></div>
     <div><label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="dia_chi" value="{{ request.args.get('dia_chi','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Loại đơn thư</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="loai" value="{{ request.args.get('loai','') }}" /></div>
+    <div><label class="block text-sm font-medium text-gray-700 mb-1">Từ khoá nội dung</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="q" placeholder="ví dụ: khiếu nại, cấp sổ..." value="{{ request.args.get('q','') }}" /></div>
     <div><label class="block text-sm font-medium text-gray-700 mb-1">Tháng</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="thang" type="number" min="1" max="12" value="{{ request.args.get('thang','') }}" /></div>
     <div><label class="block text-sm font-medium text-gray-700 mb-1">Năm</label><input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" name="nam" type="number" value="{{ request.args.get('nam','') }}" /></div>
     <div><label class="block text-sm font-medium text-gray-700 mb-1">Tình trạng</label>
@@ -92,36 +95,36 @@
 
 <!-- Danh sách đầy đủ -->
 <div class="bg-white rounded-2xl shadow p-6">
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto rounded-lg border">
     <table class="min-w-full text-sm">
-      <thead>
+      <thead class="bg-gray-100 text-gray-700">
         <tr>
-          <th class="text-left text-gray-500 font-semibold pb-3">Mã</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Loại</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Tháng/Năm</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Mã KH</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Tên</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Địa chỉ</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Nhân viên</th>
-          <th class="text-left text-gray-500 font-semibold pb-3">Tình trạng</th>
+          <th class="text-left font-semibold px-3 py-2">Mã</th>
+          <th class="text-left font-semibold px-3 py-2">Loại</th>
+          <th class="text-left font-semibold px-3 py-2">Tháng/Năm</th>
+          <th class="text-left font-semibold px-3 py-2">Mã KH</th>
+          <th class="text-left font-semibold px-3 py-2">Tên</th>
+          <th class="text-left font-semibold px-3 py-2">Địa chỉ</th>
+          <th class="text-left font-semibold px-3 py-2">Nhân viên</th>
+          <th class="text-left font-semibold px-3 py-2">Tình trạng</th>
           {% if current_user.role == 'admin' %}
-            <th class="text-right text-gray-500 font-semibold pb-3">Hành động</th>
+            <th class="text-right font-semibold px-3 py-2">Hành động</th>
           {% endif %}
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y">
         {% for r in items %}
-          <tr class="border-t">
-            <td class="py-2 font-semibold">
+          <tr class="odd:bg-white even:bg-gray-50">
+            <td class="px-3 py-2 font-semibold">
               <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-indigo-600 hover:underline">{{ r.ma }}</a>
             </td>
-            <td class="py-2">{{ r.loai_don_thu }}</td>
-            <td class="py-2">{{ r.thang or '' }}/{{ r.nam or '' }}</td>
-            <td class="py-2">{{ r.ma_kh }}</td>
-            <td class="py-2">{{ r.ten }}</td>
-            <td class="py-2">{{ r.dia_chi }}</td>
-            <td class="py-2">{{ r.nhan_vien }}</td>
-            <td class="py-2">
+            <td class="px-3 py-2">{{ r.loai_don_thu }}</td>
+            <td class="px-3 py-2">{{ r.thang or '' }}/{{ r.nam or '' }}</td>
+            <td class="px-3 py-2">{{ r.ma_kh }}</td>
+            <td class="px-3 py-2">{{ r.ten }}</td>
+            <td class="px-3 py-2">{{ r.dia_chi }}</td>
+            <td class="px-3 py-2">{{ r.nhan_vien }}</td>
+            <td class="px-3 py-2">
               {% if r.tinh_trang == 'NV chưa lấy đơn' %}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{{ r.tinh_trang }}</span>
               {% elif r.tinh_trang == 'Đang giải quyết' %}
@@ -131,10 +134,9 @@
               {% endif %}
             </td>
             {% if current_user.role == 'admin' %}
-              <td class="py-2">
+              <td class="px-3 py-2">
                 <div class="flex justify-end gap-2">
-                  <a class="inline-flex items-center px-3 py-1.5 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200"
-                     href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
+                  <a class="inline-flex items-center px-3 py-1.5 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
                   <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" onsubmit="return confirm('Xoá công văn này?')">
                     <button class="inline-flex items-center px-3 py-1.5 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" type="submit">Xoá</button>
                   </form>
@@ -143,7 +145,7 @@
             {% endif %}
           </tr>
         {% else %}
-          <tr class="border-t"><td class="py-2" colspan="{{ 9 if current_user.role == 'admin' else 8 }}">Không có dữ liệu.</td></tr>
+          <tr><td class="px-3 py-2" colspan="{{ 9 if current_user.role == 'admin' else 8 }}">Không có dữ liệu.</td></tr>
         {% endfor %}
       </tbody>
     </table>
