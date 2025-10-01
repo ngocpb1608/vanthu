@@ -21,6 +21,17 @@
           <form action="{{ url_for('logout') }}" method="get">
             <button class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700" type="submit">Đăng xuất</button>
           </form>
+          <nav class="flex items-center gap-2">
+  {% if current_user.role == 'admin' %}
+    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200"
+       href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200"
+       href="{{ url_for('users') }}">Người dùng</a>
+  {% endif %}
+  <form action="{{ url_for('logout') }}" method="get">
+    <button class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700">Đăng xuất</button>
+  </form>
+</nav>
         </nav>
         {% endif %}
       </div>
