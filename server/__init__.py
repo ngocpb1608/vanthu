@@ -33,7 +33,6 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, pwd: str):
-        # Tránh lỗi scrypt trên mac: dùng pbkdf2:sha256
         self.password_hash = generate_password_hash(pwd, method='pbkdf2:sha256')
 
     def check_password(self, pwd: str) -> bool:
@@ -99,14 +98,14 @@ def quick_login():
     u = User.query.filter_by(username='quick_staff').first()
     if not u:
         u = User(username='quick_staff', role='staff'); u.set_password('quick'); db.session.add(u); db.session.commit()
-    login_user(u); flash('Đăng nhập nhanh với quyền Nhân viên.','success'); return redirect(url_for('dashboard'))
+    login_user(u); flash('Đăng nhập nhanh (quyền xem).','success'); return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user(); flash('Đã đăng xuất.','success'); return redirect(url_for('login'))
 
-# ================= Query helper =================
+# ================= Query helper (có thêm lọc: loai, q) =================
 def _query_congvan_from_request():
     q = CongVan.query
     ma = request.args.get('ma','').strip()
@@ -115,8 +114,8 @@ def _query_congvan_from_request():
     thang = request.args.get('thang','').strip()
     nam = request.args.get('nam','').strip()
     tinh_trang = request.args.get('tinh_trang','').strip()
-    loai = request.args.get('loai','').strip()          # NEW
-    kw = request.args.get('q','').strip()               # NEW: keyword trong nội dung
+    loai = request.args.get('loai','').strip()   # NEW
+    kw = request.args.get('q','').strip()        # NEW
 
     if ma: q = q.filter(CongVan.ma.ilike(f"%{ma}%"))
     if ten: q = q.filter(CongVan.ten.ilike(f"%{ten}%"))
@@ -124,8 +123,8 @@ def _query_congvan_from_request():
     if thang.isdigit(): q = q.filter_by(thang=int(thang))
     if nam.isdigit(): q = q.filter_by(nam=int(nam))
     if tinh_trang: q = q.filter_by(tinh_trang=tinh_trang)
-    if loai: q = q.filter(CongVan.loai_don_thu.ilike(f"%{loai}%"))     # NEW
-    if kw: q = q.filter(CongVan.noi_dung.ilike(f"%{kw}%"))             # NEW
+    if loai: q = q.filter(CongVan.loai_don_thu.ilike(f"%{loai}%"))
+    if kw: q = q.filter(CongVan.noi_dung.ilike(f"%{kw}%"))
     return q
 
 # ================= Dashboard (root) =================
@@ -137,9 +136,9 @@ def dashboard():
     items = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
     return render_template('dashboard.html', dang_giai_quyet=dang_giai_quyet, chua_lay=chua_lay, items=items)
 
-# ================= CRUD =================
+# ================= CRUD (chỉ ADMIN) =================
 @app.route('/congvan/new', methods=['GET','POST'])
-@login_required
+@admin_required
 def congvan_new():
     if request.method == 'POST':
         try:
@@ -163,16 +162,10 @@ def congvan_new():
             db.session.add(cv); db.session.commit(); flash('Đã thêm công văn.','success'); return redirect(url_for('dashboard'))
         except Exception as e:
             db.session.rollback(); flash(f'Lỗi: {e}','error')
-    return render_template('congvan_form.html', mode='new', item=None)
-    # ---------------- Chi tiết công văn (view-only) ----------------
-@app.route('/congvan/<int:id>')
-@login_required
-def congvan_detail(id):
-    item = CongVan.query.get_or_404(id)
-    return render_template('congvan_detail.html', item=item)
+    return render_template('congvan_form.html', mode='new', item=None, today=datetime.today())
 
 @app.route('/congvan/<int:id>/edit', methods=['GET','POST'])
-@login_required
+@admin_required
 def congvan_edit(id):
     item = CongVan.query.get_or_404(id)
     if request.method == 'POST':
@@ -193,17 +186,22 @@ def congvan_edit(id):
             db.session.commit(); flash('Đã cập nhật công văn.','success'); return redirect(url_for('dashboard'))
         except Exception as e:
             db.session.rollback(); flash(f'Lỗi: {e}','error')
-    return render_template('congvan_form.html', mode='edit', item=item)
+    return render_template('congvan_form.html', mode='edit', item=item, today=datetime.today())
 
 @app.route('/congvan/<int:id>/delete', methods=['POST'])
-@login_required
+@admin_required
 def congvan_delete(id):
     item = CongVan.query.get_or_404(id)
-    if current_user.role != 'admin' and item.created_by_id != current_user.id:
-        flash('Bạn không có quyền xoá công văn này.','error'); return redirect(url_for('dashboard'))
     db.session.delete(item); db.session.commit(); flash('Đã xoá công văn.','success'); return redirect(url_for('dashboard'))
 
-# ================= Export Excel (openpyxl) =================
+# ================= Chi tiết công văn =================
+@app.route('/congvan/<int:id>')
+@login_required
+def congvan_detail(id):
+    item = CongVan.query.get_or_404(id)
+    return render_template('congvan_detail.html', item=item)
+
+# ================= Export Excel =================
 @app.route('/export')
 @login_required
 def export_excel():
@@ -230,42 +228,14 @@ def export_excel():
             r.updated_at.strftime('%Y-%m-%d %H:%M:%S') if r.updated_at else ''
         ])
 
-    # Auto width đơn giản
     for col in ws.columns:
         max_len = max(len(str(c.value)) if c.value is not None else 0 for c in col)
         ws.column_dimensions[col[0].column_letter].width = min(max(8, max_len + 2), 60)
 
     buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return send_file(
-        buf,
-        as_attachment=True,
-        download_name='congvan.xlsx',
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-
-# ================= Quản lý người dùng (Admin) =================
-@app.route('/users', methods=['GET', 'POST'])
-@admin_required
-def users():
-    if request.method == 'POST':
-        username = request.form.get('username','').strip()
-        password = request.form.get('password','')
-        role = request.form.get('role','staff')
-        if not username or not password:
-            flash('Thiếu tài khoản hoặc mật khẩu.', 'error')
-            return redirect(url_for('users'))
-        if User.query.filter_by(username=username).first():
-            flash('Tài khoản đã tồn tại.', 'error')
-            return redirect(url_for('users'))
-        u = User(username=username, role=role)
-        u.set_password(password)
-        db.session.add(u); db.session.commit()
-        flash('Đã tạo người dùng.', 'success')
-        return redirect(url_for('users'))
-    users = User.query.order_by(User.created_at.desc()).all()
-    return render_template('users.html', users=users)
+    wb.save(buf); buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name='congvan.xlsx',
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 @app.errorhandler(404)
 def e404(e): return render_template('error.html', code=404, message='Không tìm thấy trang'), 404
