@@ -1,41 +1,86 @@
-{% extends "base.html" %}
+{% raw %}{% extends "base.html" %}
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white rounded-2xl shadow p-6">
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold">Chi tiết công văn</h1>
-    <div class="text-sm text-gray-500">Mã: <span class="font-semibold">{{ item.ma }}</span></div>
-  </div>
-
-  <div class="grid md:grid-cols-2 gap-4 text-sm">
-    <div><span class="text-gray-500">Loại đơn thư:</span> <span class="font-medium">{{ item.loai_don_thu or '' }}</span></div>
-    <div><span class="text-gray-500">Tháng/Năm:</span> <span class="font-medium">{{ item.thang or '' }}/{{ item.nam or '' }}</span></div>
-
-    <div><span class="text-gray-500">Mã KH:</span> <span class="font-medium">{{ item.ma_kh or '' }}</span></div>
-    <div><span class="text-gray-500">Tên:</span> <span class="font-medium">{{ item.ten or '' }}</span></div>
-
-    <div><span class="text-gray-500">Địa chỉ:</span> <span class="font-medium">{{ item.dia_chi or '' }}</span></div>
-    <div><span class="text-gray-500">Nhân viên:</span> <span class="font-medium">{{ item.nhan_vien or '' }}</span></div>
-
-    <div><span class="text-gray-500">Ngày NV nhận:</span>
-      <span class="font-medium">{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan else '' }}</span>
+<div class="max-w-5xl mx-auto">
+  <div class="card p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold">Chi tiết công văn</h1>
+      <div class="text-sm">
+        <span class="px-2 py-1 rounded-lg bg-gray-100 border">Mã: {{ item.ma }}</span>
+      </div>
     </div>
-    <div><span class="text-gray-500">Tình trạng:</span> <span class="font-medium">{{ item.tinh_trang }}</span></div>
 
-    <div class="md:col-span-2"><span class="text-gray-500">Ghi chú:</span> <span class="font-medium">{{ item.ghi_chu or '' }}</span></div>
-  </div>
-
-  <div class="mt-6">
-    <div class="text-gray-500 mb-1 font-medium">Nội dung công văn</div>
-    <div class="p-4 bg-gray-50 rounded-xl whitespace-pre-wrap leading-relaxed">
-      {{ item.noi_dung or '' }}
+    <!-- Thông tin chính -->
+    <div class="grid md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <div class="text-sm text-gray-500">Loại đơn thư</div>
+        <div class="font-medium">{{ item.loai_don_thu or '(Trống)' }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Tháng/Năm</div>
+        <div class="font-medium">{{ item.thang or '' }}/{{ item.nam or '' }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Mã KH</div>
+        <div class="font-medium">{{ item.ma_kh }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Tên</div>
+        <div class="font-medium">{{ item.ten }}</div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-sm text-gray-500">Địa chỉ</div>
+        <div class="font-medium">{{ item.dia_chi }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Nhân viên</div>
+        <div class="font-medium">{{ item.nhan_vien }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Ngày NV nhận</div>
+        <div class="font-medium">
+          {{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan }}
+        </div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-sm text-gray-500">Tình trạng xử lý</div>
+        <div class="font-medium">
+          {% if item.tinh_trang == 'NV chưa lấy đơn' %}
+            <span class="px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{{ item.tinh_trang }}</span>
+          {% elif item.tinh_trang == 'Đang giải quyết' %}
+            <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{{ item.tinh_trang }}</span>
+          {% else %}
+            <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{{ item.tinh_trang }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-sm text-gray-500">Ghi chú</div>
+        <div class="font-medium">{{ item.ghi_chu }}</div>
+      </div>
     </div>
-  </div>
 
-  <div class="mt-6 flex gap-2">
-    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" href="{{ url_for('dashboard') }}">Quay lại</a>
-    {% if current_user.role == 'admin' %}
-      <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700" href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
-    {% endif %}
+    <!-- Nội dung đơn (quan trọng) -->
+    <div class="mb-4">
+      <div class="text-sm text-gray-500 mb-1">Nội dung đơn</div>
+      <pre class="whitespace-pre-wrap rounded-xl border bg-gray-50 px-3 py-2 text-sm">{{ item.noi_dung }}</pre>
+    </div>
+
+    <!-- Dấu thời gian -->
+    <div class="text-xs text-gray-500 mb-6">
+      Tạo lúc: {{ item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at }}
+      · Cập nhật: {{ item.updated_at.strftime('%Y-%m-%d %H:%M:%S') if item.updated_at }}
+    </div>
+
+    <!-- Hành động -->
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('dashboard') }}" class="btn bg-gray-100 hover:bg-gray-200">Quay lại</a>
+      {% if current_user.role == 'admin' %}
+        <a class="btn bg-indigo-600 text-white hover:bg-indigo-700" href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
+        <form method="post" action="{{ url_for('congvan_delete', id=item.id) }}" onsubmit="return confirm('Xoá công văn này?')">
+          <button class="btn bg-gray-100 hover:bg-gray-200" type="submit">Xoá</button>
+        </form>
+      {% endif %}
+    </div>
   </div>
 </div>
-{% endblock %}
+{% endblock %}{% endraw %}
