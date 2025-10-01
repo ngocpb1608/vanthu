@@ -1,9 +1,9 @@
-{% raw %}{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 <div class="grid md:grid-cols-2 gap-6">
   <!-- Danh sách người dùng -->
   <div class="card p-6">
-    <h2 class="text-xl font-bold mb-3">Người dùng</h2>
+    <h2 class="text-xl heading mb-3">Người dùng</h2>
     <div class="overflow-x-auto rounded-lg border">
       <table class="min-w-full text-sm">
         <thead class="th">
@@ -19,26 +19,19 @@
           <tr class="odd:bg-white even:bg-gray-50">
             <td class="px-3 py-2 font-medium">{{ u.username }}</td>
             <td class="px-3 py-2">{{ u.role }}</td>
-            <td class="px-3 py-2">
-              {{ u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at }}
-            </td>
+            <td class="px-3 py-2">{{ u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at }}</td>
             <td class="px-3 py-2">
               <div class="flex justify-end gap-2">
-                <!-- Đặt lại mật khẩu -->
-                <form method="post" class="flex gap-2"
-                      onsubmit="return confirm('Đặt lại mật khẩu cho {{u.username}}?')">
+                <form method="post" class="flex gap-2" onsubmit="return confirm('Đặt lại mật khẩu cho {{u.username}}?')">
                   <input type="hidden" name="action" value="reset">
                   <input type="hidden" name="user_id" value="{{ u.id }}">
-                  <input name="password" placeholder="Mật khẩu mới"
-                         class="rounded-xl border px-3 py-1.5" required>
-                  <button class="btn bg-gray-100 hover:bg-gray-200" type="submit">Đặt lại</button>
+                  <input name="password" placeholder="Mật khẩu mới" class="input" required>
+                  <button class="btn btn-ghost" type="submit">Đặt lại</button>
                 </form>
-                <!-- Xoá -->
                 <form method="post" onsubmit="return confirm('Xoá {{u.username}}?')">
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="user_id" value="{{ u.id }}">
-                  <button class="btn bg-gray-100 hover:bg-gray-200" type="submit"
-                          {% if current_user.id == u.id %}disabled title="Không xoá chính mình"{% endif %}>
+                  <button class="btn btn-ghost" type="submit" {% if current_user.id == u.id %}disabled title="Không xoá chính mình"{% endif %}>
                     Xoá
                   </button>
                 </form>
@@ -55,28 +48,28 @@
 
   <!-- Tạo người dùng mới -->
   <div class="card p-6">
-    <h2 class="text-xl font-bold mb-3">Tạo người dùng</h2>
+    <h2 class="text-xl heading mb-3">Tạo người dùng</h2>
     <form method="post" class="grid gap-3">
       <input type="hidden" name="action" value="create">
       <div>
         <label class="block text-sm text-gray-600 mb-1">Tài khoản</label>
-        <input name="username" class="w-full rounded-xl border px-3 py-2" required>
+        <input name="username" class="input" required>
       </div>
       <div>
         <label class="block text-sm text-gray-600 mb-1">Mật khẩu</label>
-        <input name="password" type="password" class="w-full rounded-xl border px-3 py-2" required>
+        <input name="password" type="password" class="input" required>
       </div>
       <div>
         <label class="block text-sm text-gray-600 mb-1">Quyền</label>
-        <select name="role" class="w-full rounded-xl border px-3 py-2 bg-white">
+        <select name="role" class="select">
           <option value="staff">staff (chỉ xem)</option>
           <option value="admin">admin</option>
         </select>
       </div>
       <div>
-        <button class="btn bg-indigo-600 text-white hover:bg-indigo-700" type="submit">Tạo</button>
+        <button class="btn btn-primary" type="submit">Tạo</button>
       </div>
     </form>
   </div>
 </div>
-{% endblock %}{% endraw %}
+{% endblock %}
