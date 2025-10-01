@@ -1,31 +1,45 @@
-@app.route('/')
-@login_required
-def dashboard():
-    # dropdown Loại
-    loai_options = [
-        row[0] for row in db.session.query(CongVan.loai_don_thu)
-        .filter(CongVan.loai_don_thu.isnot(None))
-        .filter(CongVan.loai_don_thu != '')
-        .distinct()
-        .order_by(CongVan.loai_don_thu.asc())
-        .all()
-    ]
+# ----- Quản lý người dùng (ADMIN) -----
+@app.route('/users', methods=['GET', 'POST'])
+@admin_required
+def users():
+    if request.method == 'POST':
+        action = request.form.get('action')
+        try:
+            if action == 'create':
+                username = request.form.get('username','').strip()
+                password = request.form.get('password','').strip()
+                role = request.form.get('role','staff')
+                if not username or not password:
+                    flash('Nhập tài khoản và mật khẩu.', 'error')
+                elif User.query.filter_by(username=username).first():
+                    flash('Tài khoản đã tồn tại.', 'error')
+                else:
+                    u = User(username=username, role=role)
+                    u.set_password(password)
+                    db.session.add(u); db.session.commit()
+                    flash('Đã tạo người dùng.', 'success')
 
-    # danh sách cho 2 box thống kê
-    dang_giai_quyet = CongVan.query.filter_by(tinh_trang='Đang giải quyết').all()
-    chua_lay = CongVan.query.filter_by(tinh_trang='NV chưa lấy đơn').all()
+            elif action == 'reset':
+                uid = int(request.form['user_id'])
+                pwd = request.form.get('password','').strip()
+                if not pwd:
+                    flash('Nhập mật khẩu mới.', 'error')
+                else:
+                    u = User.query.get_or_404(uid)
+                    u.set_password(pwd); db.session.commit()
+                    flash('Đã đặt lại mật khẩu.', 'success')
 
-    # thêm đếm Hoàn Thành để làm card
-    hoan_thanh_count = db.session.query(CongVan).filter_by(tinh_trang='Hoàn Thành').count()
+            elif action == 'delete':
+                uid = int(request.form['user_id'])
+                if current_user.id == uid:
+                    flash('Không thể xoá tài khoản đang đăng nhập.', 'error')
+                else:
+                    u = User.query.get_or_404(uid)
+                    db.session.delete(u); db.session.commit()
+                    flash('Đã xoá người dùng.', 'success')
+        except Exception as e:
+            db.session.rollback(); flash(f'Lỗi: {e}', 'error')
+        return redirect(url_for('users'))
 
-    # danh sách kết quả theo bộ lọc
-    items = _query_congvan_from_request().order_by(CongVan.created_at.desc()).all()
-
-    return render_template(
-        'dashboard.html',
-        dang_giai_quyet=dang_giai_quyet,
-        chua_lay=chua_lay,
-        hoan_thanh_count=hoan_thanh_count,
-        items=items,
-        loai_options=loai_options
-    )
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('users.html', users=users)
