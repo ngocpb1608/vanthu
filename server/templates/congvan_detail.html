@@ -6,7 +6,6 @@
     <div class="text-sm text-gray-500">Mã: <span class="font-semibold">{{ item.ma }}</span></div>
   </div>
 
-  <!-- Thông tin chung (2 cột) -->
   <div class="grid md:grid-cols-2 gap-4 text-sm">
     <div><span class="text-gray-500">Loại đơn thư:</span> <span class="font-medium">{{ item.loai_don_thu or '' }}</span></div>
     <div><span class="text-gray-500">Tháng/Năm:</span> <span class="font-medium">{{ item.thang or '' }}/{{ item.nam or '' }}</span></div>
@@ -18,16 +17,13 @@
     <div><span class="text-gray-500">Nhân viên:</span> <span class="font-medium">{{ item.nhan_vien or '' }}</span></div>
 
     <div><span class="text-gray-500">Ngày NV nhận:</span>
-      <span class="font-medium">
-        {{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan else '' }}
-      </span>
+      <span class="font-medium">{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan else '' }}</span>
     </div>
     <div><span class="text-gray-500">Tình trạng:</span> <span class="font-medium">{{ item.tinh_trang }}</span></div>
 
     <div class="md:col-span-2"><span class="text-gray-500">Ghi chú:</span> <span class="font-medium">{{ item.ghi_chu or '' }}</span></div>
   </div>
 
-  <!-- NỘI DUNG CÔNG VĂN (hàng riêng, full width) -->
   <div class="mt-6">
     <div class="text-gray-500 mb-1 font-medium">Nội dung công văn</div>
     <div class="p-4 bg-gray-50 rounded-xl whitespace-pre-wrap leading-relaxed">
@@ -36,11 +32,9 @@
   </div>
 
   <div class="mt-6 flex gap-2">
-    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200"
-       href="{{ url_for('dashboard') }}">Quay lại</a>
+    <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-gray-100 hover:bg-gray-200" href="{{ url_for('dashboard') }}">Quay lại</a>
     {% if current_user.role == 'admin' %}
-      <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700"
-         href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
+      <a class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700" href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
     {% endif %}
   </div>
 </div>
