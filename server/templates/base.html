@@ -1,60 +1,44 @@
-<!doctype html>
+{% raw %}<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Quản lý Công văn Đội 3</title>
+    <title>{{ APP_NAME }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: { brand: { 50:'#eef2ff', 100:'#e0e7ff', 500:'#6366f1', 600:'#4f46e5', 700:'#4338ca' } }
-          }
-        }
-      }
-    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-      .card{ @apply bg-white rounded-2xl shadow border border-gray-100; }
-      .pill{ @apply inline-flex items-center px-3 py-1.5 rounded-xl font-semibold; }
-      .btn{ @apply inline-flex items-center px-4 py-2 rounded-xl font-semibold; }
-      .chip{ @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100; }
-      .table th{ @apply text-left font-semibold px-3 py-2; }
-      .table td{ @apply px-3 py-2; }
+      .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+      .btn{display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:12px;font-weight:600}
+      .th{background:#111827;color:#fff}
     </style>
   </head>
   <body class="bg-gray-50">
-    <!-- HEADER -->
-    <header class="sticky top-0 z-40 shadow bg-gradient-to-r from-brand-600 to-indigo-700 text-white">
-      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="{{ url_for('dashboard') }}" class="text-lg md:text-xl font-bold tracking-tight">📨 Quản lý đơn thư đội 3 </a>
+    <header class="bg-white border-b sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="{{ url_for('dashboard') }}" class="text-lg font-bold">📨 {{ APP_NAME }}</a>
         {% if current_user.is_authenticated %}
         <nav class="flex items-center gap-2">
           {% if current_user.role == 'admin' %}
-            <a class="pill bg-white/10 hover:bg-white/20" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
-            <a class="pill bg-white/10 hover:bg-white/20" href="{{ url_for('users') }}">Người dùng</a>
+            <a class="btn bg-indigo-600 text-white hover:bg-indigo-700" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+            <a class="btn bg-gray-100 hover:bg-gray-200" href="{{ url_for('users') }}">Người dùng</a>
           {% endif %}
-          <form action="{{ url_for('logout') }}" method="get">
-            <button class="btn bg-white text-brand-700 hover:bg-brand-50" type="submit">Đăng xuất</button>
-          </form>
+          <a class="btn bg-gray-100 hover:bg-gray-200" href="{{ url_for('logout') }}">Đăng xuất</a>
         </nav>
         {% endif %}
       </div>
     </header>
 
-    <!-- MAIN -->
     <main class="max-w-7xl mx-auto px-4 py-6">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="space-y-2 mb-4">
-            {% for category, message in messages %}
+            {% for cat,msg in messages %}
               <div class="px-4 py-2 rounded-xl font-medium
-                  {% if category == 'success' %} bg-green-50 text-green-700 border border-green-200
-                  {% elif category == 'error' %} bg-red-50 text-red-700 border border-red-200
-                  {% else %} bg-gray-50 text-gray-700 border border-gray-200 {% endif %}">
-                {{ message }}
+                {% if cat=='success' %} bg-green-50 text-green-700 border border-green-200
+                {% elif cat=='error' %} bg-red-50 text-red-700 border border-red-200
+                {% else %} bg-gray-50 text-gray-700 border border-gray-200 {% endif %}">
+                {{ msg }}
               </div>
             {% endfor %}
           </div>
@@ -63,8 +47,6 @@
       {% block content %}{% endblock %}
     </main>
 
-    <footer class="py-8 text-center text-xs text-gray-400">
-      Làm bằng Flask + Tailwind. Gọn, nhanh, đẹp.
-    </footer>
+    <footer class="py-8 text-center text-xs text-gray-400">Flask + Tailwind. Gọn & dễ nhìn.</footer>
   </body>
-</html>
+</html>{% endraw %}
