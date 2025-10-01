@@ -1,15 +1,14 @@
-{% raw %}{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
   <div class="card p-6">
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold">Chi tiết công văn</h1>
+      <h1 class="text-xl heading">Chi tiết công văn</h1>
       <div class="text-sm">
         <span class="px-2 py-1 rounded-lg bg-gray-100 border">Mã: {{ item.ma }}</span>
       </div>
     </div>
 
-    <!-- Thông tin chính -->
     <div class="grid md:grid-cols-2 gap-4 mb-4">
       <div>
         <div class="text-sm text-gray-500">Loại đơn thư</div>
@@ -37,19 +36,17 @@
       </div>
       <div>
         <div class="text-sm text-gray-500">Ngày NV nhận</div>
-        <div class="font-medium">
-          {{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan }}
-        </div>
+        <div class="font-medium">{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan }}</div>
       </div>
       <div class="md:col-span-2">
         <div class="text-sm text-gray-500">Tình trạng xử lý</div>
         <div class="font-medium">
           {% if item.tinh_trang == 'NV chưa lấy đơn' %}
-            <span class="px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{{ item.tinh_trang }}</span>
+            <span class="chip" style="background:#fffbeb;color:#92400e;border-color:#fde68a">NV chưa lấy đơn</span>
           {% elif item.tinh_trang == 'Đang giải quyết' %}
-            <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{{ item.tinh_trang }}</span>
+            <span class="chip" style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe">Đang giải quyết</span>
           {% else %}
-            <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{{ item.tinh_trang }}</span>
+            <span class="chip" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0">Hoàn Thành</span>
           {% endif %}
         </div>
       </div>
@@ -59,28 +56,25 @@
       </div>
     </div>
 
-    <!-- Nội dung đơn (quan trọng) -->
     <div class="mb-4">
       <div class="text-sm text-gray-500 mb-1">Nội dung đơn</div>
       <pre class="whitespace-pre-wrap rounded-xl border bg-gray-50 px-3 py-2 text-sm">{{ item.noi_dung }}</pre>
     </div>
 
-    <!-- Dấu thời gian -->
     <div class="text-xs text-gray-500 mb-6">
       Tạo lúc: {{ item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at }}
       · Cập nhật: {{ item.updated_at.strftime('%Y-%m-%d %H:%M:%S') if item.updated_at }}
     </div>
 
-    <!-- Hành động -->
     <div class="flex items-center gap-2">
-      <a href="{{ url_for('dashboard') }}" class="btn bg-gray-100 hover:bg-gray-200">Quay lại</a>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Quay lại</a>
       {% if current_user.role == 'admin' %}
-        <a class="btn bg-indigo-600 text-white hover:bg-indigo-700" href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
+        <a class="btn btn-primary" href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
         <form method="post" action="{{ url_for('congvan_delete', id=item.id) }}" onsubmit="return confirm('Xoá công văn này?')">
-          <button class="btn bg-gray-100 hover:bg-gray-200" type="submit">Xoá</button>
+          <button class="btn btn-ghost" type="submit">Xoá</button>
         </form>
       {% endif %}
     </div>
   </div>
 </div>
-{% endblock %}{% endraw %}
+{% endblock %}
