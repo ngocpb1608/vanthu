@@ -1,14 +1,14 @@
-{% raw %}{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
 <div class="max-w-lg mx-auto">
   <div class="card p-6 text-center">
-    <div class="text-6xl font-bold mb-2">{{ code }}</div>
+    <div class="text-6xl heading mb-2">{{ code }}</div>
     <div class="text-gray-600 mb-4">{{ message }}</div>
     {% if current_user.is_authenticated %}
-      <a class="btn bg-gray-100 hover:bg-gray-200" href="{{ url_for('dashboard') }}">Về trang chính</a>
+      <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Về trang chính</a>
     {% else %}
-      <a class="btn bg-gray-100 hover:bg-gray-200" href="{{ url_for('login') }}">Đăng nhập</a>
+      <a class="btn btn-ghost" href="{{ url_for('login') }}">Đăng nhập</a>
     {% endif %}
   </div>
 </div>
-{% endblock %}{% endraw %}
+{% endblock %}
