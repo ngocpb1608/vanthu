@@ -19,7 +19,6 @@ from openpyxl import Workbook
 
 # ===================== APP & DB =====================
 app = Flask(__name__)
-
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
 
 db_url = os.getenv('DATABASE_URL', 'sqlite:///data.db')
@@ -158,7 +157,12 @@ def _generate_ma(thang=None, nam=None) -> str:
     if last and last[0].startswith(prefix):
         try: next_num = int(last[0].split('-')[-1]) + 1
         except: pass
-    return f"{prefix}{next_num:04d}"
+    code = f"{prefix}{next_num:04d}"
+    # đảm bảo tuyệt đối không trùng (đề phòng chạy song song)
+    while CongVan.query.filter_by(ma=code).first():
+        next_num += 1
+        code = f"{prefix}{next_num:04d}"
+    return code
 
 def _query_congvan_from_request():
     """Áp bộ lọc từ form tìm kiếm."""
@@ -196,12 +200,11 @@ def _latest_done_month():
     return None, None
 
 def _done_by_loai(nam, thang):
-    """Danh sách (loai, count) cho Hoàn Thành ở tháng/ năm chỉ định."""
+    """Danh sách (loai, count) cho Hoàn Thành ở tháng/năm chỉ định."""
     rows = db.session.query(CongVan.loai_don_thu, func.count(CongVan.id)) \
         .filter(CongVan.tinh_trang=='Hoàn Thành',
                 CongVan.nam==nam, CongVan.thang==thang) \
         .group_by(CongVan.loai_don_thu).order_by(func.count(CongVan.id).desc()).all()
-    # chuẩn hoá None -> '(Trống)'
     return [((loai or '(Trống)'), cnt) for loai, cnt in rows]
 
 # ===================== AUTH =====================
@@ -232,7 +235,7 @@ def logout():
     logout_user(); flash('Đã đăng xuất.','success')
     return redirect(url_for('login'))
 
-# ===================== DASHBOARD (có phân trang + thống kê loại/tháng gần nhất) =====================
+# ===================== DASHBOARD =====================
 @app.route('/')
 @login_required
 def dashboard():
