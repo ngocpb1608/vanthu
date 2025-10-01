@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Quản lý Công văn</title>
+    <title>Quản lý Công văn Đội 3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -29,7 +29,7 @@
     <!-- HEADER -->
     <header class="sticky top-0 z-40 shadow bg-gradient-to-r from-brand-600 to-indigo-700 text-white">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="{{ url_for('dashboard') }}" class="text-lg md:text-xl font-bold tracking-tight">📨 Đơn Thư &amp; Công Văn</a>
+        <a href="{{ url_for('dashboard') }}" class="text-lg md:text-xl font-bold tracking-tight">📨 Quản lý đơn thư đội 3 </a>
         {% if current_user.is_authenticated %}
         <nav class="flex items-center gap-2">
           {% if current_user.role == 'admin' %}
