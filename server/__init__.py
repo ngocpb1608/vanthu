@@ -14,7 +14,7 @@ from flask_login import (
     logout_user, current_user
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, desc
 from openpyxl import Workbook
 
 # ===================== APP & DB =====================
@@ -157,12 +157,7 @@ def _generate_ma(thang=None, nam=None) -> str:
     if last and last[0].startswith(prefix):
         try: next_num = int(last[0].split('-')[-1]) + 1
         except: pass
-    code = f"{prefix}{next_num:04d}"
-    # đảm bảo tuyệt đối không trùng (đề phòng chạy song song)
-    while CongVan.query.filter_by(ma=code).first():
-        next_num += 1
-        code = f"{prefix}{next_num:04d}"
-    return code
+    return f"{prefix}{next_num:04d}"
 
 def _query_congvan_from_request():
     """Áp bộ lọc từ form tìm kiếm."""
@@ -192,15 +187,13 @@ def _query_congvan_from_request():
     return q
 
 def _latest_done_month():
-    """Trả về (nam, thang) mới nhất có hồ sơ Hoàn Thành."""
     row = db.session.query(CongVan.nam, CongVan.thang) \
         .filter(CongVan.tinh_trang=='Hoàn Thành') \
-        .order_by(CongVan.nam.desc(), CongVan.thang.desc()).first()
+        .order_by(desc(CongVan.nam), desc(CongVan.thang)).first()
     if row: return int(row[0]), int(row[1])
     return None, None
 
 def _done_by_loai(nam, thang):
-    """Danh sách (loai, count) cho Hoàn Thành ở tháng/năm chỉ định."""
     rows = db.session.query(CongVan.loai_don_thu, func.count(CongVan.id)) \
         .filter(CongVan.tinh_trang=='Hoàn Thành',
                 CongVan.nam==nam, CongVan.thang==thang) \
@@ -240,11 +233,9 @@ def logout():
 @login_required
 def dashboard():
     loai_options = _distinct_loai_options()
-
-    # 2 bảng thống kê nhanh
+    # 2 nhóm thống kê nhanh
     dang_giai_quyet = CongVan.query.filter_by(tinh_trang='Đang giải quyết').all()
     chua_lay = CongVan.query.filter_by(tinh_trang='NV chưa lấy đơn').all()
-
     # Tháng gần nhất có 'Hoàn Thành' + thống kê theo Loại
     latest_nam, latest_thang = _latest_done_month()
     hoan_thanh_by_loai = _done_by_loai(latest_nam, latest_thang) if latest_nam else []
@@ -270,7 +261,7 @@ def dashboard():
 def congvan_new():
     if request.method == 'POST':
         try:
-            # Không nhận 'ma' từ form nữa -> tự sinh
+            # Không nhận 'ma' -> tự sinh
             thang_val = _safe_int(request.form.get('thang')) or _dt.today().month
             nam_val = _safe_int(request.form.get('nam')) or _dt.today().year
             auto_ma = _generate_ma(thang_val, nam_val)
@@ -307,7 +298,7 @@ def congvan_edit(id):
     item = CongVan.query.get_or_404(id)
     if request.method == 'POST':
         try:
-            # Mã không cho sửa nữa
+            # Mã không cho sửa
             item.loai_don_thu = request.form.get('loai_don_thu','').strip()
             item.thang = _safe_int(request.form.get('thang'))
             item.nam = _safe_int(request.form.get('nam'))
