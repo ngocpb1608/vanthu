@@ -1,4 +1,4 @@
-{% raw %}<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="utf-8" />
@@ -21,9 +21,7 @@
       .heading{font-weight:700;letter-spacing:.2px}
       .th{background:#f1f5f9;color:#334155}
       .chip{display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:9999px;font-weight:600;font-size:.75rem;background:#eef2ff;color:#3730a3;border:1px solid #e0e7ff}
-      .input,.select,.textarea{
-        width:100%; padding:.55rem .75rem; border:1px solid #e2e8f0; border-radius:12px; background:#fff
-      }
+      .input,.select,.textarea{width:100%; padding:.55rem .75rem; border:1px solid #e2e8f0; border-radius:12px; background:#fff}
       .input:focus,.select:focus,.textarea:focus{outline:none;border-color:#c7d2fe;box-shadow:0 0 0 3px rgba(79,70,229,.15)}
     </style>
   </head>
@@ -44,7 +42,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6">
-      {# Chỉ hiển thị lỗi/cảnh báo – bỏ success để không có dải xanh #}
+      {# chỉ hiển thị lỗi/cảnh báo, ẩn success để không có dải xanh lá #}
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="space-y-2 mb-4">
@@ -65,4 +63,4 @@
 
     <footer class="py-8 text-center text-xs text-gray-400">Flask + Tailwind — tối giản, rõ ràng.</footer>
   </body>
-</html>{% endraw %}
+</html>
