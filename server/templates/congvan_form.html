@@ -3,11 +3,12 @@
 <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow p-6">
   <h1 class="text-2xl font-bold mb-4">{% if mode == 'new' %}Thêm công văn{% else %}Sửa công văn{% endif %}</h1>
   <form method="post" class="grid md:grid-cols-2 gap-4">
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Mã công văn *</label>
-      <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-             name="ma" value="{{ item.ma if item else '' }}" required />
-    </div>
+  {% if mode == 'edit' %}
+<div>
+  <label class="block text-sm text-gray-600 mb-1">Mã công văn (tự sinh)</label>
+  <div class="px-3 py-2 rounded-xl border bg-gray-50 text-gray-700">{{ item.ma }}</div>
+</div>
+{% endif %}
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">Loại đơn thư</label>
       <input class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
