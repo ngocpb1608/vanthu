@@ -60,25 +60,19 @@
     <div style="grid-column:span 6;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn brand" type="submit">Tìm kiếm</button>
       <a class="btn" href="{{ url_for('dashboard') }}">Làm mới</a>
-    </div>
-  </form>
 
-  <!-- Nút xuất Excel theo bộ lọc (chỉ khi có Loại + Tình trạng + có kết quả) -->
-  <div style="margin-top:8px">
-    {% if has_exportable %}
-      <form method="get" action="{{ url_for('export_excel') }}" style="display:inline">
+      <!-- Xuất Excel THEO KẾT QUẢ HIỆN TẠI (không ràng buộc) -->
+      <form method="get" action="{{ url_for('export_table') }}" style="display:inline">
         {% for k,v in request.args.items() %}
           <input type="hidden" name="{{ k }}" value="{{ v }}">
         {% endfor %}
-        <button class="btn" type="submit">⬇️ Xuất Excel (lọc: Loại + Tình trạng)</button>
+        <button class="btn" type="submit">⬇️ Xuất Excel (kết quả hiện tại)</button>
       </form>
-    {% else %}
-      <span class="pill">Muốn xuất theo bộ lọc: chọn <b>Loại đơn thư</b> và <b>Tình trạng</b>.</span>
-    {% endif %}
-  </div>
+    </div>
+  </form>
 </div>
 
-<!-- HOÀN THÀNH THEO LOẠI (ĐƯA XUỐNG, HIỂN THỊ THOÁNG) -->
+<!-- HOÀN THÀNH THEO LOẠI (đưa xuống dưới, hiển thị thoáng) -->
 <div class="card" style="margin-top:14px">
   <h3 style="margin:0 0 8px 0">Hoàn thành theo Loại (tháng gần nhất)</h3>
   {% if latest_thang and latest_nam %}
@@ -102,18 +96,16 @@
   </div>
 </div>
 
-<!-- BẢNG CHI TIẾT + NÚT XUẤT EXCEL TOÀN BỘ -->
+<!-- BẢNG CHI TIẾT + (tuỳ chọn) nút xuất ở khu vực bảng -->
 <div class="card" style="margin-top:14px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
     <h3 style="margin:0">Bảng công văn</h3>
-    {% if pager and pager.total>0 %}
     <form method="get" action="{{ url_for('export_table') }}" style="display:inline">
       {% for k,v in request.args.items() %}
         <input type="hidden" name="{{ k }}" value="{{ v }}">
       {% endfor %}
-      <button class="btn" type="submit">⬇️ Xuất Excel (toàn bộ theo bộ lọc)</button>
+      <button class="btn" type="submit">⬇️ Xuất Excel (kết quả hiện tại)</button>
     </form>
-    {% endif %}
   </div>
 
   <div style="overflow:auto; max-height:60vh; border:1px solid #e5e7eb; border-radius:12px">
