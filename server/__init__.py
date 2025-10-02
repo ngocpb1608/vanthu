@@ -82,8 +82,10 @@ def healthz():
     return "ok", 200
 
 # -----------------------------------------------------------------------------
-# DB init + seed users — CHẠY LẦN ĐẦU SAU KHI SERVER ĐÃ LẮNG NGHE
+# DB init + seed users — “lười” bằng before_request + cờ 1 lần
 # -----------------------------------------------------------------------------
+_init_done = False
+
 def ensure_seed_users():
     if not User.query.first():
         admin_u = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
@@ -94,15 +96,18 @@ def ensure_seed_users():
         db.session.add(User(username=staff_u, password=staff_p, role="staff"))
         db.session.commit()
 
-@app.before_first_request
-def _lazy_init_db():
-    # Thực hiện khi có request đầu tiên -> tránh chậm lúc Render health-check
+@app.before_request
+def _lazy_init_db_once():
+    global _init_done
+    if _init_done:
+        return
     try:
         db.create_all()
         ensure_seed_users()
     except Exception:
-        # Không để nổ 500 ở đây; xem log Render nếu cần
+        # tránh 500 khi health-check / request đầu tiên
         pass
+    _init_done = True
 
 # -----------------------------------------------------------------------------
 # Auth routes
@@ -313,5 +318,4 @@ def _500(e):
 # Run local
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Render sẽ set PORT, local mặc định 5000
     app.run(debug=True, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
