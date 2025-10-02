@@ -35,9 +35,12 @@
   <div class="stat green">
     <h4>Hoàn thành theo Loại (tháng gần nhất)</h4>
     {% if latest_thang and latest_nam %}
-      <div class="pill" style="margin-top:6px">Tháng {{ latest_thang }} / {{ latest_nam }}</div>
       <div class="pill" style="margin-top:6px">
-        Hoàn thành: {{ completed_in_month }} / {{ total_in_month }} ({{ (completed_in_month*100//(total_in_month or 1)) }}%)
+        Tháng {{ latest_thang }} / {{ latest_nam }}
+        {% if month_total %}
+          · Hoàn thành: <b>{{ month_completed }}</b> / Tổng: <b>{{ month_total }}</b>
+          {% if month_total > 0 %} ({{ ((month_completed / month_total) * 100) | round(1) }}%){% endif %}
+        {% endif %}
       </div>
     {% endif %}
     <div class="list" style="margin-top:10px">
@@ -71,8 +74,8 @@
       {% endfor %}
       <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(không ghi)</option>
     </select>
-    <input name="thang" placeholder="Tháng" value="{{ request.args.get('thang','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <input name="nam" placeholder="Năm" value="{{ request.args.get('nam','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    <input name="thang" placeholder="Tháng" value={{ request.args.get('thang','')|tojson }} style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    <input name="nam" placeholder="Năm" value={{ request.args.get('nam','')|tojson }} style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
     <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" style="grid-column:span 5;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
     <select name="tinh_trang" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
       <option value="">Tình trạng</option>
@@ -80,24 +83,31 @@
         <option value="{{ s }}" {% if request.args.get('tinh_trang')==s %}selected{% endif %}>{{ s }}</option>
       {% endfor %}
     </select>
-    <div style="grid-column:span 6;display:flex;gap:8px;flex-wrap:wrap">
+    <div style="grid-column:span 6;display:flex;gap:8px;align-items:center">
       <button class="btn brand" type="submit">Tìm kiếm</button>
       <a class="btn" href="{{ url_for('dashboard') }}">Làm mới</a>
 
-      {# Xuất Excel khi có loai + tình_trang và có ít nhất 1 kết quả trên trang hiện tại #}
-      {% if request.args.get('loai') and request.args.get('tinh_trang') and items|length > 0 %}
-        <a class="btn" href="{{ url_for('export_excel') }}?{{ request.query_string|safe }}">Xuất Excel</a>
+      <!-- Nút xuất Excel chỉ hiện khi có loai + tinh_trang và có kết quả -->
+      {% if has_exportable %}
+      <form method="get" action="{{ url_for('export_excel') }}">
+        {% for k,v in request.args.items() %}
+          <input type="hidden" name="{{ k }}" value="{{ v }}">
+        {% endfor %}
+        <button class="btn" type="submit">⬇️ Xuất Excel (theo bộ lọc)</button>
+      </form>
+      {% else %}
+        <span class="pill" title="Chọn Loại + Tình trạng và có ≥1 kết quả để xuất">Xuất Excel: cần Loại + Tình trạng</span>
       {% endif %}
     </div>
   </form>
 </div>
 
-<!-- BẢNG DỮ LIỆU (cuộn) -->
+<!-- BẢNG DỮ LIỆU (scroll 60vh) -->
 <div class="card" style="margin-top:14px">
   <h3 style="margin:0 0 8px 0">Bảng công văn</h3>
-  <div class="table-wrap">
+  <div style="overflow:auto; max-height:60vh; border:1px solid #e5e7eb; border-radius:12px">
     <table>
-      <thead>
+      <thead style="position:sticky; top:0; background:#fff">
         <tr>
           <th>STT</th><th>Tháng</th><th>Năm</th><th>Loại</th><th>Mã KH</th><th>Tên</th><th>Địa chỉ</th><th>Nội dung</th><th>Nhân viên</th><th>Ngày nhận</th><th>Tình trạng</th>
           {% if current_user.role == 'admin' %}<th>Hành động</th>{% endif %}
@@ -118,7 +128,7 @@
           <td>{{ r.ngay_nv_nhan or '' }}</td>
           <td>
             {% set t = (r.tinh_trang or '') %}
-            <span class="pill {% if 'Hoàn' in t %}ok{% elif 'Đang' in t %}warn{% elif 'PKD' in t %}bad{% endif %}">{{ t }}</span>
+            <span class="pill {% if 'Hoàn' in t %}ok{% elif 'Đang' in t %}warn{% endif %}">{{ t }}</span>
           </td>
           {% if current_user.role == 'admin' %}
           <td>
