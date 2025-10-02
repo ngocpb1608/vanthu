@@ -1,43 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- THỐNG KÊ NHANH -->
-<div style="display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))">
-  <div class="card">
-    <div style="color:#64748b">NV chưa lấy</div>
-    <div style="font-size:22px;font-weight:700">{{ chua_lay|length }}</div>
+<!-- THỐNG KÊ NHANH (có màu) -->
+<div class="stats">
+  <div class="stat blue">
+    <h4>NV chưa lấy — chi tiết</h4>
+    <div class="num">{{ chua_lay|length }}</div>
     {% if chua_lay %}
-      <div style="margin-top:8px;max-height:120px;overflow:auto">
-        <table>
-          <thead><tr><th>Mã</th><th>Loại</th><th>Tên KH</th><th>Địa chỉ</th><th>Nội dung</th><th>NV</th></tr></thead>
-          <tbody>
-          {% for r in chua_lay[:10] %}
-            <tr>
-              <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.id }}</a></td>
-              <td>{{ r.loai_don_thu or '' }}</td>
-              <td>{{ r.ten or '' }}</td>
-              <td>{{ r.dia_chi or '' }}</td>
-              <td>{{ r.noi_dung or '' }}</td>
-              <td>{{ r.nhan_vien or '' }}</td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="list">
+      <table>
+        <thead><tr><th>Mã</th><th>Loại</th><th>Tên KH</th><th>Địa chỉ</th><th>Nội dung</th><th>NV</th></tr></thead>
+        <tbody>
+        {% for r in chua_lay[:10] %}
+          <tr>
+            <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.id }}</a></td>
+            <td>{{ r.loai_don_thu or '' }}</td>
+            <td>{{ r.ten or '' }}</td>
+            <td>{{ r.dia_chi or '' }}</td>
+            <td>{{ r.noi_dung or '' }}</td>
+            <td>{{ r.nhan_vien or '' }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% endif %}
   </div>
 
-  <div class="card">
-    <div style="color:#64748b">Đang giải quyết</div>
-    <div style="font-size:22px;font-weight:700">{{ dang_giai_quyet|length }}</div>
+  <div class="stat yellow">
+    <h4>Đang giải quyết</h4>
+    <div class="num">{{ dang_giai_quyet|length }}</div>
   </div>
 
-  <div class="card">
-    <div style="color:#64748b">Hoàn thành theo Loại (tháng gần nhất)</div>
+  <div class="stat green">
+    <h4>Hoàn thành theo Loại (tháng gần nhất)</h4>
     {% if latest_thang and latest_nam %}
       <div class="pill" style="margin-top:6px">Tháng {{ latest_thang }} / {{ latest_nam }}</div>
     {% endif %}
-    <div style="margin-top:8px">
+    <div class="list" style="margin-top:10px">
       {% if hoan_thanh_by_loai %}
         <table>
           <thead><tr><th>Loại đơn thư</th><th>Số lượng</th></tr></thead>
@@ -48,7 +48,7 @@
           </tbody>
         </table>
       {% else %}
-        <div style="color:#64748b">Không có dữ liệu.</div>
+        <div style="padding:10px;color:#0f172a">Không có dữ liệu.</div>
       {% endif %}
     </div>
   </div>
@@ -63,7 +63,9 @@
     <input name="dia_chi" placeholder="Địa chỉ" value="{{ request.args.get('dia_chi','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
     <select name="loai" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
       <option value="">Loại đơn thư</option>
-      {% for lo in loai_options %}<option value="{{ lo }}" {% if request.args.get('loai')==lo %}selected{% endif %}>{{ lo }}</option>{% endfor %}
+      {% for lo in loai_options %}
+        <option value="{{ lo }}" {% if request.args.get('loai')==lo %}selected{% endif %}>{{ lo }}</option>
+      {% endfor %}
       <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(không ghi)</option>
     </select>
     <input name="thang" placeholder="Tháng" value="{{ request.args.get('thang','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
@@ -71,7 +73,9 @@
     <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" style="grid-column:span 5;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
     <select name="tinh_trang" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
       <option value="">Tình trạng</option>
-      {% for s in STATUS_CHOICES %}<option value="{{ s }}" {% if request.args.get('tinh_trang')==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      {% for s in STATUS_CHOICES if s != 'PKD trả về NV' %}
+        <option value="{{ s }}" {% if request.args.get('tinh_trang')==s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
     </select>
     <div style="grid-column:span 6;display:flex;gap:8px">
       <button class="btn brand" type="submit">Tìm kiếm</button>
