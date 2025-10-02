@@ -1,90 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-5xl mx-auto">
-  <div class="card p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl heading">Chi tiết công văn</h1>
-      <div class="text-sm">
-        <span class="px-2 py-1 rounded-lg bg-gray-100 border">Mã: {{ item.ma }}</span>
-      </div>
-    </div>
-
-    <!-- Lưới thông tin -->
-    <div class="grid md:grid-cols-2 gap-4 mb-4">
-      <div>
-        <div class="text-sm text-gray-500">Loại đơn thư</div>
-        <div class="font-medium">{{ item.loai_don_thu or '(Trống)' }}</div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500">Tháng/Năm</div>
-        <div class="font-medium">{{ item.thang or '' }}/{{ item.nam or '' }}</div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500">Mã KH</div>
-        <div class="font-medium">{{ item.ma_kh }}</div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500">Tên</div>
-        <div class="font-medium">{{ item.ten }}</div>
-      </div>
-      <div class="md:col-span-2">
-        <div class="text-sm text-gray-500">Địa chỉ</div>
-        <div class="font-medium">{{ item.dia_chi }}</div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500">Nhân viên</div>
-        <div class="font-medium">{{ item.nhan_vien }}</div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500">Ngày NV nhận</div>
-        <div class="font-medium">{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item.ngay_nv_nhan }}</div>
-      </div>
-
-      <div class="md:col-span-2">
-        <div class="text-sm text-gray-500">Tình trạng xử lý</div>
-        <div class="font-medium">
-          {% if item.tinh_trang == 'NV chưa lấy đơn' %}
-            <span class="chip" style="background:#fffbeb;color:#92400e;border-color:#fde68a">NV chưa lấy đơn</span>
-          {% elif item.tinh_trang == 'Đang giải quyết' %}
-            <span class="chip" style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe">Đang giải quyết</span>
-          {% else %}
-            <span class="chip" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0">Hoàn Thành</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- NỘI DUNG ĐƠN (hiển thị trực tiếp trong grid) -->
-      <div class="md:col-span-2">
-        <div class="text-sm text-gray-500">Nội dung đơn</div>
-        <div class="font-medium whitespace-pre-wrap">{{ item.noi_dung }}</div>
-      </div>
-
-      <div class="md:col-span-2">
-        <div class="text-sm text-gray-500">Ghi chú</div>
-        <div class="font-medium">{{ item.ghi_chu }}</div>
-      </div>
-    </div>
-
-    <!-- Khối đọc thoải mái (giữ lại để đảm bảo không bị thiếu) -->
-    <div class="mb-4">
-      <div class="text-sm text-gray-500 mb-1">Nội dung đơn (đầy đủ)</div>
-      <pre class="whitespace-pre-wrap rounded-xl border bg-gray-50 px-3 py-2 text-sm">{{ item.noi_dung }}</pre>
-    </div>
-
-    <div class="text-xs text-gray-500 mb-6">
-      Tạo lúc: {{ item.created_at.strftime('%Y-%m-%d %H:%M:%S') if item.created_at }}
-      · Cập nhật: {{ item.updated_at.strftime('%Y-%m-%d %H:%M:%S') if item.updated_at }}
-    </div>
-
-    <div class="flex items-center gap-2">
-      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Quay lại</a>
-      {% if current_user.role == 'admin' %}
-        <a class="btn btn-primary" href="{{ url_for('congvan_edit', id=item.id) }}">Sửa</a>
-        <form method="post" action="{{ url_for('congvan_delete', id=item.id) }}" onsubmit="return confirm('Xoá công văn này?')">
-          <button class="btn btn-ghost" type="submit">Xoá</button>
-        </form>
-      {% endif %}
-    </div>
-  </div>
+<div class="card">
+  <h3 style="margin:0 0 8px 0">Chi tiết công văn #{{ r.id }}</h3>
+  <table>
+    <tr><th>Mã KH</th><td>{{ r.ma_kh or '' }}</td></tr>
+    <tr><th>Tên KH</th><td>{{ r.ten or '' }}</td></tr>
+    <tr><th>Địa chỉ</th><td>{{ r.dia_chi or '' }}</td></tr>
+    <tr><th>Loại đơn thư</th><td>{{ r.loai_don_thu or '' }}</td></tr>
+    <tr><th>Tháng / Năm</th><td>{{ r.thang or '' }} / {{ r.nam or '' }}</td></tr>
+    <tr><th>Nội dung</th><td>{{ r.noi_dung or '' }}</td></tr>
+    <tr><th>Nhân viên</th><td>{{ r.nhan_vien or '' }}</td></tr>
+    <tr><th>Ngày NV nhận</th><td>{{ r.ngay_nv_nhan or '' }}</td></tr>
+    <tr><th>Tình trạng</th><td>{{ r.tinh_trang or '' }}</td></tr>
+  </table>
 </div>
 {% endblock %}
