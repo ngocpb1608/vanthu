@@ -10,11 +10,15 @@ from flask_login import (
 )
 
 # -----------------------------------------------------------------------------
-# App & Database config
+# App & Database config (sửa postgres:// -> postgresql://)
 # -----------------------------------------------------------------------------
+db_url = os.getenv("DATABASE_URL", "sqlite:///data.db")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-key")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///data.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -59,13 +63,7 @@ def load_user(uid):
 # Constants / UI
 # -----------------------------------------------------------------------------
 APP_NAME = "Đơn Thư & Công Văn"
-
-STATUS_CHOICES = [
-    "NV chưa lấy đơn",
-    "Đang giải quyết",
-    "Hoàn Thành",
-    "PKD trả về NV",
-]
+STATUS_CHOICES = ["NV chưa lấy đơn", "Đang giải quyết", "Hoàn Thành", "PKD trả về NV"]
 
 @app.context_processor
 def inject_globals():
@@ -77,7 +75,14 @@ def page_url(num: int):
     return url_for("dashboard", **args)
 
 # -----------------------------------------------------------------------------
-# DB init + seed users
+# HEALTH CHECK — trả 200 ngay, KHÔNG đụng DB
+# -----------------------------------------------------------------------------
+@app.route("/healthz")
+def healthz():
+    return "ok", 200
+
+# -----------------------------------------------------------------------------
+# DB init + seed users — CHẠY LẦN ĐẦU SAU KHI SERVER ĐÃ LẮNG NGHE
 # -----------------------------------------------------------------------------
 def ensure_seed_users():
     if not User.query.first():
@@ -89,9 +94,15 @@ def ensure_seed_users():
         db.session.add(User(username=staff_u, password=staff_p, role="staff"))
         db.session.commit()
 
-with app.app_context():
-    db.create_all()
-    ensure_seed_users()
+@app.before_first_request
+def _lazy_init_db():
+    # Thực hiện khi có request đầu tiên -> tránh chậm lúc Render health-check
+    try:
+        db.create_all()
+        ensure_seed_users()
+    except Exception:
+        # Không để nổ 500 ở đây; xem log Render nếu cần
+        pass
 
 # -----------------------------------------------------------------------------
 # Auth routes
@@ -134,7 +145,6 @@ def logout():
 @app.route("/")
 @login_required
 def dashboard():
-    # --- Build filter query an toàn ---
     q = CongVan.query
 
     ten = request.args.get("ten", "").strip()
@@ -151,15 +161,11 @@ def dashboard():
     if ma_kh:
         q = q.filter(CongVan.ma_kh.ilike(f"%{ma_kh}%"))
     if thang:
-        try:
-            q = q.filter(CongVan.thang == int(thang))
-        except ValueError:
-            pass
+        try: q = q.filter(CongVan.thang == int(thang))
+        except ValueError: pass
     if nam:
-        try:
-            q = q.filter(CongVan.nam == int(nam))
-        except ValueError:
-            pass
+        try: q = q.filter(CongVan.nam == int(nam))
+        except ValueError: pass
     if dia_chi:
         q = q.filter(CongVan.dia_chi.ilike(f"%{dia_chi}%"))
     if loai:
@@ -172,7 +178,6 @@ def dashboard():
     if kw:
         q = q.filter(CongVan.noi_dung.ilike(f"%{kw}%"))
 
-    # --- Pagination ---
     try:
         page = max(int(request.args.get("page", 1)), 1)
     except ValueError:
@@ -181,7 +186,6 @@ def dashboard():
     pagination = q.order_by(CongVan.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
     items = pagination.items
 
-    # --- Thống kê nhanh ---
     try:
         chua_lay = CongVan.query.filter_by(tinh_trang="NV chưa lấy đơn").order_by(CongVan.id.desc()).all()
     except Exception:
@@ -191,9 +195,7 @@ def dashboard():
     except Exception:
         dang_giai_quyet = []
 
-    # --- Hoàn thành theo loại (tháng gần nhất) ---
-    latest_thang = None
-    latest_nam = None
+    latest_thang = latest_nam = None
     hoan_thanh_by_loai = []
     try:
         last = (
@@ -210,17 +212,13 @@ def dashboard():
                     CongVan.tinh_trang == "Hoàn Thành",
                     CongVan.nam == latest_nam,
                     CongVan.thang == latest_thang,
-                )
-                .group_by(CongVan.loai_don_thu)
-                .all()
+                ).group_by(CongVan.loai_don_thu).all()
             )
             hoan_thanh_by_loai = [(r[0] or "(không ghi)", int(r[1])) for r in rows]
     except Exception:
-        latest_thang = None
-        latest_nam = None
+        latest_thang = latest_nam = None
         hoan_thanh_by_loai = []
 
-    # --- Loại đơn thư options ---
     try:
         loai_rows = db.session.query(CongVan.loai_don_thu).distinct().all()
         loai_options = [r[0] for r in loai_rows if r[0]]
@@ -237,7 +235,7 @@ def dashboard():
     )
 
 # -----------------------------------------------------------------------------
-# CRUD tối thiểu
+# CRUD
 # -----------------------------------------------------------------------------
 @app.route("/congvan/<int:id>")
 @login_required
@@ -309,11 +307,11 @@ def _404(e):
 
 @app.errorhandler(500)
 def _500(e):
-    # Log chi tiết xem trong Render Logs
     return render_template("error.html", code=500, message="Lỗi máy chủ"), 500
 
 # -----------------------------------------------------------------------------
 # Run local
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
+    # Render sẽ set PORT, local mặc định 5000
     app.run(debug=True, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
