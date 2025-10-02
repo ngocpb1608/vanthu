@@ -1,44 +1,88 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- HÀNG THỐNG KÊ: CHỈ 2 Ô -->
-<div class="stats" style="display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));">
-  <div class="stat blue">
-    <h4>NV chưa lấy — chi tiết</h4>
-    <div class="num">{{ chua_lay|length }}</div>
-    {% if chua_lay %}
-    <div class="list">
-      <table>
-        <thead><tr><th>Mã</th><th>Loại</th><th>Tên KH</th><th>Địa chỉ</th><th>Nội dung</th><th>NV</th></tr></thead>
-        <tbody>
-        {% for r in chua_lay[:12] %}
-          <tr>
-            <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.id }}</a></td>
-            <td>{{ r.loai_don_thu or '' }}</td>
-            <td>{{ r.ten or '' }}</td>
-            <td>{{ r.dia_chi or '' }}</td>
-            <td style="max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
-            <td>{{ r.nhan_vien or '' }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+<!-- ====================== THỐNG KÊ (ĐẶT LÊN TRÊN) ====================== -->
+<div class="card" style="margin-bottom:14px">
+  <h3 style="margin:0 0 10px 0">Thống kê</h3>
+
+  <!-- Hai ô thống kê chính -->
+  <div class="stats" style="display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));">
+    <div class="stat blue">
+      <h4>NV chưa lấy — chi tiết</h4>
+      <div class="num">{{ chua_lay|length }}</div>
+      {% if chua_lay %}
+      <div class="list">
+        <table>
+          <thead>
+            <tr>
+              <th style="white-space:nowrap">Mã KH</th>
+              <th>Loại</th>
+              <th>Tên KH</th>
+              <th>Địa chỉ</th>
+              <th>Nội dung</th>
+              <th>NV</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for r in chua_lay[:12] %}
+            <tr>
+              <td style="white-space:nowrap">
+                {% if r.ma_kh %}
+                  <a href="{{ url_for('congvan_detail', id=r.id) }}" title="Xem chi tiết">{{ r.ma_kh }}</a>
+                {% else %}
+                  <a href="{{ url_for('congvan_detail', id=r.id) }}" title="Xem chi tiết">#{{ r.id }}</a>
+                {% endif %}
+              </td>
+              <td>{{ r.loai_don_thu or '' }}</td>
+              <td>{{ r.ten or '' }}</td>
+              <td>{{ r.dia_chi or '' }}</td>
+              <td style="max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
+              <td>{{ r.nhan_vien or '' }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
+
+    <div class="stat yellow">
+      <h4>Đang giải quyết</h4>
+      <div class="num">{{ dang_giai_quyet|length }}</div>
+    </div>
   </div>
 
-  <div class="stat yellow">
-    <h4>Đang giải quyết</h4>
-    <div class="num">{{ dang_giai_quyet|length }}</div>
+  <!-- Hoàn thành theo Loại (tháng gần nhất) - vẫn trong khối Thống kê -->
+  <div class="card" style="margin-top:12px;background:#fafcff">
+    <h4 style="margin:0 0 8px 0">Hoàn thành theo Loại (tháng gần nhất)</h4>
+    {% if latest_thang and latest_nam %}
+      <div class="pill" style="margin:6px 0">
+        Tháng {{ latest_thang }}/{{ latest_nam }}
+        {% if month_total %}
+          · Hoàn thành <b>{{ month_completed }}</b> / Tổng <b>{{ month_total }}</b>
+          {% if month_total>0 %} ({{ ((month_completed/month_total)*100)|round(1) }}%){% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      {% if hoan_thanh_by_loai %}
+        {% for loai,cnt in hoan_thanh_by_loai %}
+          <div class="pill" style="font-weight:600">{{ loai }}</div>
+          <div class="pill" style="text-align:right">{{ cnt }}</div>
+        {% endfor %}
+      {% else %}
+        <div>Không có dữ liệu.</div>
+      {% endif %}
+    </div>
   </div>
 </div>
 
-<!-- TÌM KIẾM -->
-<div class="card" style="margin-top:14px">
+<!-- ====================== TÌM KIẾM ====================== -->
+<div class="card">
   <h3 style="margin:0 0 8px 0">Tìm kiếm công văn</h3>
   <form method="get" style="display:grid;gap:8px;grid-template-columns:repeat(6,minmax(0,1fr))">
-    <input name="ten" placeholder="Tên KH" value="{{ request.args.get('ten','') }}" class="ipt">
-    <input name="ma_kh" placeholder="Mã KH" value="{{ request.args.get('ma_kh','') }}" class="ipt">
+    <input name="ten"   placeholder="Tên KH" value="{{ request.args.get('ten','') }}"   class="ipt">
+    <input name="ma_kh" placeholder="Mã KH"  value="{{ request.args.get('ma_kh','') }}" class="ipt">
     <input name="dia_chi" placeholder="Địa chỉ" value="{{ request.args.get('dia_chi','') }}" class="ipt">
     <select name="loai" class="ipt">
       <option value="">Loại đơn thư</option>
@@ -48,7 +92,8 @@
       <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(không ghi)</option>
     </select>
     <input name="thang" placeholder="Tháng" value="{{ request.args.get('thang','') }}" class="ipt">
-    <input name="nam" placeholder="Năm" value="{{ request.args.get('nam','') }}" class="ipt">
+    <input name="nam"   placeholder="Năm"   value="{{ request.args.get('nam','') }}"   class="ipt">
+
     <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" class="ipt" style="grid-column:span 5">
     <select name="tinh_trang" class="ipt">
       <option value="">Tình trạng</option>
@@ -61,7 +106,7 @@
       <button class="btn brand" type="submit">Tìm kiếm</button>
       <a class="btn" href="{{ url_for('dashboard') }}">Làm mới</a>
 
-      <!-- Xuất Excel THEO KẾT QUẢ HIỆN TẠI (không ràng buộc) -->
+      <!-- Xuất Excel theo KẾT QUẢ HIỆN TẠI (không ràng buộc) -->
       <form method="get" action="{{ url_for('export_table') }}" style="display:inline">
         {% for k,v in request.args.items() %}
           <input type="hidden" name="{{ k }}" value="{{ v }}">
@@ -72,31 +117,7 @@
   </form>
 </div>
 
-<!-- HOÀN THÀNH THEO LOẠI (đưa xuống dưới, hiển thị thoáng) -->
-<div class="card" style="margin-top:14px">
-  <h3 style="margin:0 0 8px 0">Hoàn thành theo Loại (tháng gần nhất)</h3>
-  {% if latest_thang and latest_nam %}
-    <div class="pill" style="margin:6px 0">
-      Tháng {{ latest_thang }}/{{ latest_nam }}
-      {% if month_total %}
-        · Hoàn thành <b>{{ month_completed }}</b> / Tổng <b>{{ month_total }}</b>
-        {% if month_total>0 %} ({{ ((month_completed/month_total)*100)|round(1) }}%){% endif %}
-      {% endif %}
-    </div>
-  {% endif %}
-  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
-    {% if hoan_thanh_by_loai %}
-      {% for loai,cnt in hoan_thanh_by_loai %}
-        <div class="pill" style="font-weight:600">{{ loai }}</div>
-        <div class="pill" style="text-align:right">{{ cnt }}</div>
-      {% endfor %}
-    {% else %}
-      <div>Không có dữ liệu.</div>
-    {% endif %}
-  </div>
-</div>
-
-<!-- BẢNG CHI TIẾT + (tuỳ chọn) nút xuất ở khu vực bảng -->
+<!-- ====================== BẢNG CHI TIẾT ====================== -->
 <div class="card" style="margin-top:14px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
     <h3 style="margin:0">Bảng công văn</h3>
@@ -112,19 +133,31 @@
     <table id="main-table">
       <thead style="position:sticky; top:0; background:#fff; z-index:1">
         <tr>
-          <th>STT</th><th>Tháng</th><th>Năm</th><th>Loại</th><th>Mã KH</th><th>Tên</th>
-          <th>Địa chỉ</th><th>Nội dung</th><th>Nhân viên</th><th>Ngày nhận</th><th>Tình trạng</th>
+          <th>STT</th>
+          <th>Tháng</th><th>Năm</th><th>Loại</th>
+          <th>Mã KH</th>
+          <th>Tên</th><th>Địa chỉ</th><th>Nội dung</th>
+          <th>Nhân viên</th><th>Ngày nhận</th><th>Tình trạng</th>
           {% if current_user.role == 'admin' %}<th>Hành động</th>{% endif %}
         </tr>
       </thead>
       <tbody>
         {% for r in items %}
         <tr>
-          <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.id }}</a></td>
+          <td>{{ r.id }}</td>
           <td>{{ r.thang or '' }}</td>
           <td>{{ r.nam or '' }}</td>
           <td>{{ r.loai_don_thu or '' }}</td>
-          <td>{{ r.ma_kh or '' }}</td>
+
+          <!-- YÊU CẦU 2: click vào MÃ KH để mở chi tiết -->
+          <td style="white-space:nowrap">
+            {% if r.ma_kh %}
+              <a href="{{ url_for('congvan_detail', id=r.id) }}" title="Xem chi tiết">{{ r.ma_kh }}</a>
+            {% else %}
+              <a href="{{ url_for('congvan_detail', id=r.id) }}" title="Xem chi tiết">#{{ r.id }}</a>
+            {% endif %}
+          </td>
+
           <td>{{ r.ten or '' }}</td>
           <td>{{ r.dia_chi or '' }}</td>
           <td>{{ r.noi_dung or '' }}</td>
@@ -132,8 +165,9 @@
           <td>{{ r.ngay_nv_nhan or '' }}</td>
           <td>
             {% set t = (r.tinh_trang or '') %}
-            <span class="pill {% if 'Hoàn' in t %}ok{% elif 'Đang' in t %}warn{% endif %}">{{ t }}</span>
+            <span class="pill {% if 'Hoàn' in t or 'hoan' in t %}ok{% elif 'Đang' in t or 'dang' in t %}warn{% endif %}">{{ t }}</span>
           </td>
+
           {% if current_user.role == 'admin' %}
           <td>
             <a class="btn" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
