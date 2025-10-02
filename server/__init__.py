@@ -50,9 +50,9 @@ class CongVan(db.Model):
     dia_chi = db.Column(db.String(255))
     nhan_vien = db.Column(db.String(64))
     noi_dung = db.Column(db.Text)
-    ngay_nv_nhan = db.Column(db.String(20))
+    ngay_nv_nhan = db.Column(db.String(20))  # để nguyên chuỗi (YYYY-MM-DD)
     tinh_trang = db.Column(db.String(120))
-    ghi_chu = db.Column(db.Text)
+    ghi_chu = db.Column(db.Text)            # <-- Ghi chú (mới)
     ket_qua = db.Column(db.String(120))
 
 @login_manager.user_loader
@@ -135,7 +135,7 @@ def dashboard():
         ]))
         .order_by(CongVan.id.desc()).all())
 
-    # Đang giải quyết (hiển thị chi tiết như yêu cầu)
+    # Đang giải quyết (chi tiết)
     dang_giai_quyet = (CongVan.query
         .filter(_ilike_any(CongVan.tinh_trang, [
             "đang giải quyết", "dang giai quyet", "đang xử lý", "dang xu ly"
@@ -169,7 +169,7 @@ def dashboard():
             .order_by(CongVan.loai_don_thu.asc())
             .all())
 
-    # Bảng (admin xem); vẫn chuẩn bị dữ liệu để template kiểm tra role
+    # Bảng (admin xem)
     loai_options = [r[0] for r in db.session.query(CongVan.loai_don_thu).distinct().all() if r[0]]
     q = apply_filters(CongVan.query.order_by(CongVan.id.desc()))
     page = int(request.args.get("page", 1)); per_page = 20
@@ -186,11 +186,77 @@ def dashboard():
         loai_options=loai_options, APP_NAME="Đơn thư đội 3"
     )
 
-# ================= Detail (admin only) =================
+# ================= CRUD Công văn =================
+@app.route("/congvan/new", methods=["GET", "POST"])
+@login_required
+def congvan_new():
+    admin_required()
+    if request.method == "POST":
+        r = CongVan(
+            loai_don_thu = request.form.get("loai_don_thu") or None,
+            thang        = int(request.form.get("thang") or 0) or None,
+            nam          = int(request.form.get("nam") or 0) or None,
+            ma_kh        = request.form.get("ma_kh") or None,
+            ten          = request.form.get("ten") or None,
+            dia_chi      = request.form.get("dia_chi") or None,
+            nhan_vien    = request.form.get("nhan_vien") or None,
+            noi_dung     = request.form.get("noi_dung") or None,
+            ngay_nv_nhan = request.form.get("ngay_nv_nhan") or None,
+            tinh_trang   = request.form.get("tinh_trang") or None,
+            ghi_chu      = request.form.get("ghi_chu") or None,   # <-- Ghi chú
+            ket_qua      = request.form.get("ket_qua") or None
+        )
+        db.session.add(r); db.session.commit()
+        flash("Đã thêm công văn", "ok")
+        return redirect(url_for("dashboard"))
+
+    # GET: mặc định tháng/năm hiện tại
+    today = datetime.now()
+    return render_template("congvan_form.html",
+                           mode="new",
+                           default_thang=today.month,
+                           default_nam=today.year)
+
+@app.route("/congvan/<int:id>/edit", methods=["GET", "POST"])
+@login_required
+def congvan_edit(id):
+    admin_required()
+    r = CongVan.query.get_or_404(id)
+    if request.method == "POST":
+        r.loai_don_thu = request.form.get("loai_don_thu") or None
+        r.thang        = int(request.form.get("thang") or 0) or None
+        r.nam          = int(request.form.get("nam") or 0) or None
+        r.ma_kh        = request.form.get("ma_kh") or None
+        r.ten          = request.form.get("ten") or None
+        r.dia_chi      = request.form.get("dia_chi") or None
+        r.nhan_vien    = request.form.get("nhan_vien") or None
+        r.noi_dung     = request.form.get("noi_dung") or None
+        r.ngay_nv_nhan = request.form.get("ngay_nv_nhan") or None
+        r.tinh_trang   = request.form.get("tinh_trang") or None
+        r.ghi_chu      = request.form.get("ghi_chu") or None   # <-- Ghi chú
+        r.ket_qua      = request.form.get("ket_qua") or None
+        db.session.commit()
+        flash("Đã cập nhật công văn", "ok")
+        return redirect(url_for("congvan_detail", id=r.id))
+
+    return render_template("congvan_form.html",
+                           mode="edit", r=r,
+                           default_thang=r.thang, default_nam=r.nam)
+
+@app.route("/congvan/<int:id>/delete", methods=["POST"])
+@login_required
+def congvan_delete(id):
+    admin_required()
+    r = CongVan.query.get_or_404(id)
+    db.session.delete(r); db.session.commit()
+    flash("Đã xoá công văn", "ok")
+    return redirect(url_for("dashboard"))
+
+# ================= Detail (CHO PHÉP STAFF XEM) =================
 @app.route("/congvan/<int:id>")
 @login_required
 def congvan_detail(id):
-    admin_required()
+    # KHÔNG chặn staff nữa (chỉ chặn sửa/xoá ở template)
     r = CongVan.query.get_or_404(id)
     return render_template("congvan_detail.html", r=r)
 
@@ -198,7 +264,7 @@ def congvan_detail(id):
 @app.route("/export")
 @login_required
 def export_table():
-    # Nếu muốn chỉ admin mới export, uncomment dòng sau:
+    # Nếu muốn cấm staff export: uncomment
     # admin_required()
 
     q = apply_filters(CongVan.query.order_by(CongVan.id.desc()))
@@ -232,7 +298,7 @@ def _ctx():
     def page_url(p):
         args = request.args.to_dict(flat=True); args["page"] = p
         return url_for("dashboard", **args)
-    return dict(page_url=page_url, APP_NAME="Đơn thư đội 3")
+    return dict(page_url=page_url, APP_NAME="Đơn thư đội 3", STATUS_CHOICES=STATUS_CHOICES)
 
 if __name__ == "__main__":
     app.run(debug=True)
