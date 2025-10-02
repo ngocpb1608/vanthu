@@ -2,15 +2,19 @@
 {% block content %}
 
 <style>
+  /* mở rộng danh sách trong ô thống kê khi bấm */
   .list.open{ max-height:70vh !important; }
   .card-tools{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+  /* stack 1 cột cho 2 ô thống kê */
+  .stats-onecol{ display:grid; gap:12px; grid-template-columns:1fr; }
 </style>
 
 <!-- ===== THỐNG KÊ ===== -->
 <div class="card" style="margin-bottom:14px">
   <h3 class="heading">Thống kê</h3>
 
-  <div class="stats">
+  <!-- Đặt 2 ô theo thứ tự: NV chưa lấy (trên) -> Đang giải quyết (dưới) -->
+  <div class="stats-onecol">
     <!-- NV CHƯA LẤY — CHI TIẾT -->
     <div class="stat-card stat-blue">
       <div class="stat-title">NV chưa lấy — chi tiết</div>
@@ -29,12 +33,13 @@
             {% for r in chua_lay %}
             <tr>
               <td style="white-space:nowrap">
+                <!-- staff cũng được xem chi tiết -->
                 <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
               </td>
               <td>{{ r.loai_don_thu or '' }}</td>
               <td>{{ r.ten or '' }}</td>
               <td>{{ r.dia_chi or '' }}</td>
-              <td style="max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
+              <td style="max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
               <td>{{ r.nhan_vien or '' }}</td>
             </tr>
             {% endfor %}
@@ -44,10 +49,13 @@
 
       <div class="card-tools">
         {% if chua_lay|length > 12 %}
-          <button class="btn small" type="button" onclick="toggleList('list-chualay', this)" data-label="Xem tất cả ({{ chua_lay|length }})">
+          <button class="btn small" type="button"
+                  onclick="toggleList('list-chualay', this)"
+                  data-label="Xem tất cả ({{ chua_lay|length }})">
             Xem tất cả ({{ chua_lay|length }})
           </button>
         {% endif %}
+        <!-- Lọc & Export nhóm này -->
         <a class="btn small" href="{{ url_for('dashboard', tinh_trang='NV chưa lấy đơn') }}">Lọc nhóm này</a>
         <form method="get" action="{{ url_for('export_table') }}">
           <input type="hidden" name="tinh_trang" value="NV chưa lấy đơn">
@@ -57,7 +65,7 @@
       {% endif %}
     </div>
 
-    <!-- ĐANG GIẢI QUYẾT — CHI TIẾT -->
+    <!-- ĐANG GIẢI QUYẾT — CHI TIẾT (ĐẶT Ở DƯỚI) -->
     <div class="stat-card stat-amber">
       <div class="stat-title">Đang giải quyết — chi tiết</div>
       <div class="num">{{ dang_giai_quyet|length }}</div>
@@ -80,7 +88,7 @@
               <td>{{ r.loai_don_thu or '' }}</td>
               <td>{{ r.ten or '' }}</td>
               <td>{{ r.dia_chi or '' }}</td>
-              <td style="max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
+              <td style="max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
               <td>{{ r.nhan_vien or '' }}</td>
             </tr>
             {% endfor %}
@@ -90,7 +98,9 @@
 
       <div class="card-tools">
         {% if dang_giai_quyet|length > 12 %}
-          <button class="btn small" type="button" onclick="toggleList('list-danggq', this)" data-label="Xem tất cả ({{ dang_giai_quyet|length }})">
+          <button class="btn small" type="button"
+                  onclick="toggleList('list-danggq', this)"
+                  data-label="Xem tất cả ({{ dang_giai_quyet|length }})">
             Xem tất cả ({{ dang_giai_quyet|length }})
           </button>
         {% endif %}
