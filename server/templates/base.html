@@ -1,87 +1,93 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ APP_NAME }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg: linear-gradient(180deg,#eef6ff 0%,#f8fbff 60%,#ffffff 100%);
-      --card:#ffffff; --ink:#1f2937; --muted:#64748b; --bd:#e5e7eb;
-      --brand:#2563eb; --brand-weak:#eaf2ff; --ring:#93c5fd;
-      --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --brand:#4f46e5;      /* Indigo mềm */
+      --brand-2:#06b6d4;    /* Cyan nhấn */
+      --bg:#f7fafc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --ok:#14b8a6;
+      --warn:#f59e0b;
+      --err:#ef4444;
+      --ring:#e5e7eb;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);min-height:100%;color:var(--ink);
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     a{color:var(--brand);text-decoration:none}
-    .container{max-width:1200px;margin:0 auto;padding:22px}
-    .nav{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 18px;
-      background:var(--card);border:1px solid var(--bd);border-radius:16px;
-      box-shadow:0 14px 40px rgba(37,99,235,.08),0 2px 10px rgba(2,32,89,.05)}
-    .nav .title{display:flex;gap:10px;align-items:center;font-weight:800}
-    .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--bd);
-      background:#fff;padding:9px 13px;border-radius:12px;transition:.15s}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.06)}
-    .btn.ghost{background:transparent}
-    .btn.brand{border-color:var(--brand);background:var(--brand);color:#fff}
-    .wrap{margin-top:18px}
-    .flash{margin:16px 0;padding:10px 14px;border-radius:12px;background:var(--brand-weak);
-      border:1px solid var(--ring);color:#1e3a8a}
-    .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;
-      box-shadow:0 10px 28px rgba(2,36,89,.05)}
-    h1{font-size:22px;margin:0}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid #f1f5f9;text-align:left;font-size:14px}
-    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#f1f5ff;border:1px solid var(--bd)}
-    .pill.ok{background:#ecfdf5;border-color:#86efac}
-    .pill.warn{background:#fff7ed;border-color:#fdba74}
-    .pill.bad{background:#fef2f2;border-color:#fecaca}
-
-    /* STAT CARDS */
-    .stats{display:grid;gap:14px;grid-template-columns:repeat(3,minmax(0,1fr))}
-    .stat{border-radius:16px;color:#0f172a;padding:16px;position:relative;overflow:hidden}
-    .stat h4{margin:0;color:#0f172a;font-weight:700}
-    .stat .num{font-size:28px;font-weight:800;margin-top:6px}
-    .stat .list{margin-top:10px;max-height:140px;overflow:auto;background:rgba(255,255,255,.35);border-radius:12px}
-    .blue {background:linear-gradient(180deg,#dbeafe, #bfdbfe)}
-    .yellow{background:linear-gradient(180deg,#fde68a,#fcd34d)}
-    .green {background:linear-gradient(180deg,#bbf7d0,#86efac)}
+    .layout{max-width:1180px;margin:0 auto;padding:18px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title{font-weight:800;font-size:20px;display:flex;gap:8px;align-items:center}
+    .nav{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{padding:8px 12px;border:1px solid var(--ring);border-radius:10px;background:#fff;cursor:pointer}
+    .btn:hover{border-color:var(--brand)}
+    .btn.brand{background:linear-gradient(90deg,var(--brand),var(--brand-2));color:#fff;border:none}
+    .btn.small{padding:6px 10px;font-size:12px}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:12px}
+    .pill{display:inline-block;padding:6px 10px;background:#f1f5f9;border:1px solid var(--ring);border-radius:999px}
+    .stats .stat{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:12px}
+    .stats .num{font-weight:800;font-size:22px;margin:6px 0 8px}
+    .blue{border-left:6px solid var(--brand)}
+    .yellow{border-left:6px solid var(--warn)}
+    table{border-collapse:collapse;width:100%}
+    th,td{padding:8px;border-bottom:1px solid var(--ring);vertical-align:top}
+    thead th{font-weight:700}
+    .ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+    .warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+    .err{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca}
+    .ipt{padding:8px;border:1px solid var(--ring);border-radius:8px;background:#fff;width:100%}
+    .list{overflow:auto;max-height:180px;border:1px solid var(--ring);border-radius:10px}
+    .msg{margin:8px 0}
+    .msg.ok{color:#065f46}.msg.error{color:#7f1d1d}
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="nav">
-    <div class="title">
-      <span>📁</span>
-      <a href="{{ url_for('dashboard') }}"><h1>{{ APP_NAME }}</h1></a>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      {% if current_user.is_authenticated %}
-        {% if current_user.role == 'admin' %}
-          <a class="btn brand" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+  <div class="layout">
+    <div class="topbar">
+      <div class="title">📁 {{ APP_NAME }}</div>
+      <div class="nav">
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+          <a class="btn" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
           <a class="btn" href="{{ url_for('users') }}">Người dùng</a>
         {% endif %}
-        <a class="btn ghost" href="{{ url_for('logout') }}">Đăng xuất</a>
-      {% else %}
-        <a class="btn ghost" href="{{ url_for('login') }}">Đăng nhập</a>
-      {% endif %}
+        {% if current_user.is_authenticated %}
+          <a class="btn" href="{{ url_for('logout') }}">Đăng xuất</a>
+        {% endif %}
+      </div>
     </div>
-  </div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for cat,msg in messages %}
-        <div class="flash">{{ msg }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for c, m in messages %}
+          <div class="msg {{ c }}">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-  <div class="wrap">
     {% block content %}{% endblock %}
   </div>
-</div>
+
+  <!-- DataTables nhẹ (tuỳ chọn) cho sort/search cục bộ -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-datatables@latest/dist/vanilla-dataTables.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vanilla-datatables@latest/dist/vanilla-dataTables.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const t = document.querySelector('#main-table');
+      if (t) new DataTable(t, {searchable:true, fixedHeight:true, perPage:20});
+      // hiện/ẩn mật khẩu (trang login)
+      const toggle = document.querySelector('[data-toggle-pw]');
+      if (toggle){
+        const inp = document.querySelector('input[name="password"]');
+        toggle.addEventListener('click', () => {
+          inp.type = inp.type === 'password' ? 'text' : 'password';
+          toggle.textContent = inp.type === 'password' ? '👁 Hiện' : '🙈 Ẩn';
+        });
+      }
+    });
+  </script>
 </body>
 </html>
