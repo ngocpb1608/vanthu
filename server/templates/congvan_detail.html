@@ -2,16 +2,18 @@
 {% block content %}
 <div class="card">
   <h3 style="margin:0 0 8px 0">Chi tiết công văn #{{ r.id }}</h3>
-  <table>
-    <tr><th>Mã KH</th><td>{{ r.ma_kh or '' }}</td></tr>
-    <tr><th>Tên KH</th><td>{{ r.ten or '' }}</td></tr>
-    <tr><th>Địa chỉ</th><td>{{ r.dia_chi or '' }}</td></tr>
-    <tr><th>Loại đơn thư</th><td>{{ r.loai_don_thu or '' }}</td></tr>
-    <tr><th>Tháng / Năm</th><td>{{ r.thang or '' }} / {{ r.nam or '' }}</td></tr>
-    <tr><th>Nội dung</th><td>{{ r.noi_dung or '' }}</td></tr>
-    <tr><th>Nhân viên</th><td>{{ r.nhan_vien or '' }}</td></tr>
-    <tr><th>Ngày NV nhận</th><td>{{ r.ngay_nv_nhan or '' }}</td></tr>
-    <tr><th>Tình trạng</th><td>{{ r.tinh_trang or '' }}</td></tr>
-  </table>
+  <div style="max-height:60vh; overflow:auto; border:1px solid #e5e7eb; border-radius:12px; padding:10px">
+    <table>
+      <tr><th style="width:220px">Mã KH</th><td>{{ r.ma_kh or '' }}</td></tr>
+      <tr><th>Tên KH</th><td>{{ r.ten or '' }}</td></tr>
+      <tr><th>Địa chỉ</th><td>{{ r.dia_chi or '' }}</td></tr>
+      <tr><th>Loại đơn thư</th><td>{{ r.loai_don_thu or '' }}</td></tr>
+      <tr><th>Tháng / Năm</th><td>{{ r.thang or '' }} / {{ r.nam or '' }}</td></tr>
+      <tr><th>Nội dung</th><td style="white-space:pre-wrap">{{ r.noi_dung or '' }}</td></tr>
+      <tr><th>Nhân viên</th><td>{{ r.nhan_vien or '' }}</td></tr>
+      <tr><th>Ngày NV nhận</th><td>{{ r.ngay_nv_nhan or '' }}</td></tr>
+      <tr><th>Tình trạng</th><td>{{ r.tinh_trang or '' }}</td></tr>
+    </table>
+  </div>
 </div>
 {% endblock %}
