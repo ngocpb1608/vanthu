@@ -11,12 +11,12 @@ from flask_login import (
     LoginManager, login_user, logout_user,
     current_user, login_required, UserMixin
 )
-from sqlalchemy import text
+from sqlalchemy import text, or_, func
 from werkzeug.exceptions import Forbidden
 from openpyxl import Workbook
 
 # =================== App & DB ===================
-APP_NAME = "Quản lý đơn thư đội 3"  # theo yêu cầu tiêu đề
+APP_NAME = "Quản lý đơn thư đội 3"  # tiêu đề trang
 
 def _normalize_pg_url(url: str) -> str:
     if url.startswith("postgres://"):
@@ -40,7 +40,7 @@ class User(db.Model, UserMixin):
 
 class CongVan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    ma = db.Column(db.String(50))                 # Mã nội bộ (tùy chọn)
+    ma = db.Column(db.String(50))                 # Mã CV (tự sinh)
     loai_don_thu = db.Column(db.String(120))
     thang = db.Column(db.Integer)
     nam = db.Column(db.Integer)
@@ -167,9 +167,16 @@ def _make_excel(rows, prefix):
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-def _redir_back():
-    qs = request.query_string.decode()
-    return redirect(url_for("dashboard") + (f"?{qs}" if qs else ""))
+def _generate_ma(thang: int, nam: int) -> str:
+    """Tạo mã CV dạng CV-YYYYMM-0001 dựa trên số lượng hiện có trong tháng/năm."""
+    if not (thang and nam):
+        today = date.today()
+        thang = thang or today.month
+        nam = nam or today.year
+    count_in_month = db.session.query(func.count(CongVan.id))\
+        .filter(CongVan.nam == nam, CongVan.thang == thang).scalar() or 0
+    seq = count_in_month + 1
+    return f"CV-{nam}{thang:02d}-{seq:04d}"
 
 # =================== Auth ===================
 @app.route("/login", methods=["GET","POST"])
@@ -219,44 +226,62 @@ def dashboard():
         pagination = q.order_by(CongVan.id.desc()).paginate(page=page, per_page=20, error_out=False)
         items = pagination.items
 
-        # 2 thống kê chính
+        # -------- Thống kê robust (cả không dấu) --------
+        # NV chưa lấy
         chua_lay = (CongVan.query
-                    .filter(CongVan.tinh_trang.ilike("%chưa lấy%"))
+                    .filter(or_(
+                        CongVan.tinh_trang.ilike("%chưa lấy%"),
+                        CongVan.tinh_trang.ilike("%chua lay%"),
+                        CongVan.tinh_trang.ilike("%chua%lay%")
+                    ))
                     .order_by(CongVan.id.desc()).all())
+
+        # Đang giải quyết
         dang_giai_quyet = (CongVan.query
-                           .filter(CongVan.tinh_trang.ilike("%đang giải%"))
+                           .filter(or_(
+                               CongVan.tinh_trang.ilike("%đang giải%"),
+                               CongVan.tinh_trang.ilike("%dang giai%"),
+                               CongVan.tinh_trang.ilike("%dang%giai%")
+                           ))
                            .order_by(CongVan.id.desc()).all())
 
-        # Hoàn thành theo loại - tháng gần nhất
+        # Hoàn thành theo loại - tháng gần nhất (chấp nhận có/không dấu)
         last = (db.session.query(CongVan.nam, CongVan.thang)
-                .filter(CongVan.tinh_trang.ilike("%hoàn thành%"),
-                        CongVan.nam.isnot(None), CongVan.thang.isnot(None))
+                .filter(or_(
+                    CongVan.tinh_trang.ilike("%hoàn thành%"),
+                    CongVan.tinh_trang.ilike("%hoan thanh%")
+                ), CongVan.nam.isnot(None), CongVan.thang.isnot(None))
                 .order_by(CongVan.nam.desc(), CongVan.thang.desc())
                 .first())
         if last:
             latest_nam, latest_thang = int(last[0]), int(last[1])
-            month_total = db.session.query(db.func.count()).filter(
+            month_total = db.session.query(func.count()).filter(
                 CongVan.nam==latest_nam, CongVan.thang==latest_thang
             ).scalar() or 0
-            rows = (db.session.query(CongVan.loai_don_thu, db.func.count())
-                    .filter(CongVan.tinh_trang.ilike("%hoàn thành%"),
-                            CongVan.nam==latest_nam, CongVan.thang==latest_thang)
+            rows = (db.session.query(CongVan.loai_don_thu, func.count())
+                    .filter(or_(
+                        CongVan.tinh_trang.ilike("%hoàn thành%"),
+                        CongVan.tinh_trang.ilike("%hoan thanh%")
+                    ), CongVan.nam==latest_nam, CongVan.thang==latest_thang)
                     .group_by(CongVan.loai_don_thu).all())
             hoan_thanh_by_loai = [(r[0] or "(không ghi)", int(r[1])) for r in rows]
             month_completed = sum(cnt for _,cnt in hoan_thanh_by_loai)
         else:
-            rows = (db.session.query(CongVan.loai_don_thu, db.func.count())
-                    .filter(CongVan.tinh_trang.ilike("%hoàn thành%"))
+            rows = (db.session.query(CongVan.loai_don_thu, func.count())
+                    .filter(or_(
+                        CongVan.tinh_trang.ilike("%hoàn thành%"),
+                        CongVan.tinh_trang.ilike("%hoan thanh%")
+                    ))
                     .group_by(CongVan.loai_don_thu).all())
             hoan_thanh_by_loai = [(r[0] or "(không ghi)", int(r[1])) for r in rows]
 
+        # Options loại
         loai_rows = db.session.query(CongVan.loai_don_thu).distinct().all()
         loai_options = [r[0] for r in loai_rows if r[0]]
 
     except Exception:
         app.logger.exception("dashboard query failed")
 
-    # KHÔNG cần has_exportable nữa
     return render_template(
         "dashboard.html",
         items=items, pager=pagination, page_url=page_url,
@@ -267,14 +292,10 @@ def dashboard():
         loai_options=loai_options
     )
 
-# =================== Export Excel ===================
+# =================== Export Excel (kết quả hiện tại) ===================
 @app.route("/export_table")
 @login_required
 def export_table():
-    """
-    Xuất Excel theo KẾT QUẢ HIỆN TẠI của bộ lọc tìm kiếm.
-    Không ràng buộc điều kiện gì. Nếu 0 dòng → file chỉ có header.
-    """
     rows = build_filtered_query().order_by(CongVan.id.desc()).all()
     return _make_excel(rows, "congvan_ketqua")
 
@@ -290,8 +311,14 @@ def congvan_detail(id):
 def congvan_new():
     admin_required()
     if request.method == "POST":
+        # Nếu không nhập mã → tự sinh dựa trên tháng/năm trong form (hoặc ngày hiện tại)
+        th = int(request.form.get("thang") or 0) or None
+        nm = int(request.form.get("nam") or 0) or None
+        ma_in = request.form.get("ma", "").strip()
+        auto_ma = ma_in or _generate_ma(th, nm)
+
         r = CongVan(
-            ma=request.form.get("ma") or None,
+            ma=auto_ma,
             loai_don_thu=request.form.get("loai_don_thu") or None,
             thang=int(request.form.get("thang") or 0) or None,
             nam=int(request.form.get("nam") or 0) or None,
@@ -307,10 +334,13 @@ def congvan_new():
         db.session.add(r); db.session.commit()
         flash("Đã thêm công văn", "ok")
         return redirect(url_for("dashboard"))
-    # mặc định tháng/năm hiện tại
+
+    # GET: mặc định tháng/năm + mã tự sinh xem trước
     today = date.today()
+    preview_ma = _generate_ma(today.month, today.year)
     return render_template("congvan_form.html", mode="new",
-                           default_thang=today.month, default_nam=today.year)
+                           default_thang=today.month, default_nam=today.year,
+                           preview_ma=preview_ma)
 
 @app.route("/congvan/<int:id>/edit", methods=["GET","POST"])
 @login_required
@@ -318,7 +348,7 @@ def congvan_edit(id):
     admin_required()
     r = CongVan.query.get_or_404(id)
     if request.method == "POST":
-        r.ma = request.form.get("ma") or None
+        r.ma = (request.form.get("ma") or r.ma or "").strip() or _generate_ma(r.thang, r.nam)
         r.loai_don_thu = request.form.get("loai_don_thu") or None
         r.thang = int(request.form.get("thang") or 0) or None
         r.nam = int(request.form.get("nam") or 0) or None
@@ -333,8 +363,10 @@ def congvan_edit(id):
         db.session.commit()
         flash("Đã cập nhật công văn", "ok")
         return redirect(url_for("congvan_detail", id=r.id))
+
     return render_template("congvan_form.html", mode="edit", r=r,
-                           default_thang=r.thang, default_nam=r.nam)
+                           default_thang=r.thang, default_nam=r.nam,
+                           preview_ma=r.ma or _generate_ma(r.thang, r.nam))
 
 @app.route("/congvan/<int:id>/delete", methods=["POST"])
 @login_required
