@@ -1,14 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-lg mx-auto">
-  <div class="card p-6 text-center">
-    <div class="text-6xl heading mb-2">{{ code }}</div>
-    <div class="text-gray-600 mb-4">{{ message }}</div>
-    {% if current_user.is_authenticated %}
-      <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Về trang chính</a>
-    {% else %}
-      <a class="btn btn-ghost" href="{{ url_for('login') }}">Đăng nhập</a>
-    {% endif %}
-  </div>
+<div class="card" style="max-width:720px;margin:24px auto">
+  <h2 style="margin:0 0 6px 0">{{ code }} — Lỗi máy chủ</h2>
+  <p style="color:#64748b">{{ message }}</p>
+  <p><a class="btn" href="{{ url_for('dashboard') }}">Về trang chủ</a></p>
 </div>
 {% endblock %}
