@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 
+{# ====== CHỐT AN TOÀN – nếu biến thiếu thì gán rỗng để không 500 ====== #}
+{% set chua = chua_lay if chua_lay is not none else [] %}
+{% set dang = dang_giai_quyet if dang_giai_quyet is not none else [] %}
+{% set hoanthanh = hoan_thanh_by_loai if hoan_thanh_by_loai is not none else [] %}
+{% set loai_opts = loai_options if loai_options is not none else [] %}
+{% set status_opts = STATUS_CHOICES if STATUS_CHOICES is not none else [] %}
+{% set latest_thang = latest_thang if latest_thang is not none else None %}
+{% set latest_nam = latest_nam if latest_nam is not none else None %}
+
 <div class="space-y-6"><!-- Bọc toàn trang để tránh lồng khối -->
 
   <!-- === THỐNG KÊ TRẠNG THÁI (trên cùng) === -->
@@ -14,11 +23,11 @@
     <div class="grid md:grid-cols-2 gap-4">
       <div class="stat stat-teal">
         <div class="font-extrabold mb-1">NV chưa lấy</div>
-        <div class="text-sm text-gray-600">{{ chua_lay|length }} hồ sơ</div>
+        <div class="text-sm text-gray-600">{{ chua|length }} hồ sơ</div>
       </div>
       <div class="stat stat-amber">
         <div class="font-extrabold mb-1">Đang giải quyết</div>
-        <div class="text-sm text-gray-600">{{ dang_giai_quyet|length }} hồ sơ</div>
+        <div class="text-sm text-gray-600">{{ dang|length }} hồ sơ</div>
       </div>
     </div>
 
@@ -26,7 +35,7 @@
     <div class="card p-5 mt-4">
       <div class="mb-3 flex items-center justify-between">
         <h3 class="text-lg heading">NV chưa lấy — chi tiết</h3>
-        <div class="text-sm text-gray-600">Tổng {{ chua_lay|length }} hồ sơ</div>
+        <div class="text-sm text-gray-600">Tổng {{ chua|length }} hồ sơ</div>
       </div>
 
       <div class="overflow-x-auto rounded-lg border max-h-[28rem] overflow-y-auto">
@@ -42,7 +51,7 @@
             </tr>
           </thead>
           <tbody class="divide-y">
-            {% for r in chua_lay %}
+            {% for r in chua %}
             <tr class="odd:bg-white even:bg-gray-50">
               <td class="px-3 py-2 font-semibold">
                 <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-[var(--pri)] hover:underline">{{ r.ma }}</a>
@@ -84,8 +93,8 @@
             </tr>
           </thead>
           <tbody class="divide-y">
-            {% if hoan_thanh_by_loai %}
-              {% for loai, cnt in hoan_thanh_by_loai %}
+            {% if hoanthanh %}
+              {% for loai, cnt in hoanthanh %}
               <tr class="odd:bg-white even:bg-gray-50">
                 <td class="px-3 py-2">{{ loai }}</td>
                 <td class="px-3 py-2 text-right font-semibold">{{ cnt }}</td>
@@ -134,7 +143,7 @@
             <select class="select" name="loai">
               <option value="">— Tất cả —</option>
               <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(Trống)</option>
-              {% for opt in loai_options %}
+              {% for opt in loai_opts %}
                 <option value="{{ opt }}" {% if request.args.get('loai')==opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
             </select>
@@ -143,7 +152,7 @@
             <label class="block text-sm text-gray-600 mb-1">Tình trạng</label>
             <select class="select" name="tinh_trang">
               <option value="">— Tất cả —</option>
-              {% for st in STATUS_CHOICES %}
+              {% for st in status_opts %}
                 <option value="{{ st }}" {% if request.args.get('tinh_trang')==st %}selected{% endif %}>{{ st }}</option>
               {% endfor %}
             </select>
@@ -234,7 +243,7 @@
         </table>
       </div>
 
-      {% if pager.pages > 1 %}
+      {% if pager and pager.pages and pager.pages > 1 %}
       <div class="mt-4 flex items-center justify-between text-sm">
         <div>Trang {{ pager.page }} / {{ pager.pages }} · {{ pager.total }} bản ghi</div>
         <div class="flex gap-2">
