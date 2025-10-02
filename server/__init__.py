@@ -16,7 +16,7 @@ from werkzeug.exceptions import Forbidden
 from openpyxl import Workbook
 
 # =================== App & DB ===================
-APP_NAME = "Quản lý đơn thư đội 3"
+APP_NAME = "Quản lý đơn thư đội 3"  # theo yêu cầu tiêu đề
 
 def _normalize_pg_url(url: str) -> str:
     if url.startswith("postgres://"):
@@ -145,7 +145,7 @@ def build_filtered_query():
     return q
 
 def _make_excel(rows, prefix):
-    """Tạo file Excel từ list CongVan."""
+    """Tạo file Excel từ list CongVan (cho phép 0 dòng → file chỉ có header)."""
     wb = Workbook(); ws = wb.active; ws.title = "CongVan"
     headers = ["ID","Mã","Loại đơn thư","Tháng","Năm","Mã KH","Tên","Địa chỉ","Nội dung",
                "Nhân viên","Ngày NV nhận","Tình trạng"]
@@ -256,9 +256,7 @@ def dashboard():
     except Exception:
         app.logger.exception("dashboard query failed")
 
-    has_exportable = bool(request.args.get("loai") and request.args.get("tinh_trang")
-                          and pagination and pagination.total>0)
-
+    # KHÔNG cần has_exportable nữa
     return render_template(
         "dashboard.html",
         items=items, pager=pagination, page_url=page_url,
@@ -266,32 +264,19 @@ def dashboard():
         hoan_thanh_by_loai=hoan_thanh_by_loai,
         latest_thang=latest_thang, latest_nam=latest_nam,
         month_total=month_total, month_completed=month_completed,
-        loai_options=loai_options, has_exportable=has_exportable
+        loai_options=loai_options
     )
 
 # =================== Export Excel ===================
-@app.route("/export")
-@login_required
-def export_excel():
-    """Xuất Excel theo bộ lọc — yêu cầu Loại + Tình trạng và có ≥1 kết quả."""
-    q = build_filtered_query()
-    need_loai = request.args.get("loai")
-    need_tt = request.args.get("tinh_trang")
-    rows = q.order_by(CongVan.id.desc()).all()
-    if not (need_loai and need_tt and rows):
-        flash("Chọn Loại đơn thư + Tình trạng (và có kết quả) để xuất Excel.", "error")
-        return _redir_back()
-    return _make_excel(rows, "congvan_filter")
-
 @app.route("/export_table")
 @login_required
 def export_table():
-    """Xuất toàn bộ theo bộ lọc hiện tại (không điều kiện)."""
+    """
+    Xuất Excel theo KẾT QUẢ HIỆN TẠI của bộ lọc tìm kiếm.
+    Không ràng buộc điều kiện gì. Nếu 0 dòng → file chỉ có header.
+    """
     rows = build_filtered_query().order_by(CongVan.id.desc()).all()
-    if not rows:
-        flash("Không có dữ liệu để xuất.", "error")
-        return _redir_back()
-    return _make_excel(rows, "congvan_all")
+    return _make_excel(rows, "congvan_ketqua")
 
 # =================== CRUD Công văn ===================
 @app.route("/congvan/<int:id>")
