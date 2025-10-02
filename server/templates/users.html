@@ -1,44 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card" style="margin-bottom:14px">
-  <h2 style="margin:0 0 12px 0">Tạo tài khoản</h2>
-  <form method="post" action="{{ url_for('users_create') }}" style="display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))">
-    <input name="username" placeholder="Tài khoản" required style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <input name="password" placeholder="Mật khẩu" required style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <select name="role" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+<div class="card">
+  <h3 style="margin-top:0">Người dùng</h3>
+
+  <form method="post" action="{{ url_for('users_create') }}" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <input class="ipt" name="username" placeholder="Username">
+    <input class="ipt" name="password" placeholder="Mật khẩu">
+    <select class="ipt" name="role">
       <option value="staff">staff</option>
       <option value="admin">admin</option>
     </select>
-    <button class="btn brand" type="submit">Tạo</button>
+    <button class="btn brand" type="submit">Tạo tài khoản</button>
   </form>
-</div>
 
-<div class="card">
-  <h2 style="margin:0 0 12px 0">Danh sách người dùng</h2>
-  <div style="overflow:auto">
+  <div style="overflow:auto;max-height:60vh;border:1px solid #e5e7eb;border-radius:12px">
     <table>
-      <thead><tr><th>ID</th><th>Tài khoản</th><th>Quyền</th><th>Đổi mật khẩu</th><th>Xoá</th></tr></thead>
+      <thead style="position:sticky;top:0;background:#fff"><tr><th>ID</th><th>Username</th><th>Role</th><th style="width:340px">Hành động</th></tr></thead>
       <tbody>
-        {% for u in users %}
+      {% for u in users %}
         <tr>
           <td>{{ u.id }}</td>
           <td>{{ u.username }}</td>
-          <td>{{ u.role }}</td>
+          <td><span class="pill">{{ u.role }}</span></td>
           <td>
-            <form method="post" action="{{ url_for('users_password', uid=u.id) }}" style="display:flex;gap:8px">
-              <input name="new_password" placeholder="Mật khẩu mới" required style="padding:6px;border:1px solid #e5e7eb;border-radius:8px">
-              <button class="btn" type="submit">Đổi</button>
+            <form method="post" action="{{ url_for('users_password', id=u.id) }}" style="display:inline-flex;gap:6px;align-items:center">
+              <input class="ipt" name="password" placeholder="Mật khẩu mới">
+              <button class="btn" type="submit">Đổi mật khẩu</button>
             </form>
-          </td>
-          <td>
-            <form method="post" action="{{ url_for('users_delete', uid=u.id) }}" onsubmit="return confirm('Xoá tài khoản {{ u.username }}?')">
+            <form method="post" action="{{ url_for('users_delete', id=u.id) }}" style="display:inline" onsubmit="return confirm('Xoá tài khoản này?')">
               <button class="btn" type="submit">Xoá</button>
             </form>
           </td>
         </tr>
-        {% else %}
-        <tr><td colspan="5" style="color:#64748b">Chưa có người dùng</td></tr>
-        {% endfor %}
+      {% else %}
+        <tr><td colspan="4">Chưa có tài khoản.</td></tr>
+      {% endfor %}
       </tbody>
     </table>
   </div>
