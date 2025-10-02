@@ -1,14 +1,16 @@
 from datetime import datetime
 import os
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import (
+    Flask, render_template, request, redirect, url_for, flash, session
+)
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, login_user, logout_user, current_user, login_required, UserMixin
 )
 
 # -----------------------------------------------------------------------------
-# App & DB
+# App & Database config
 # -----------------------------------------------------------------------------
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-key")
@@ -18,7 +20,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # -----------------------------------------------------------------------------
-# Models (User + CongVan). Nếu bạn đã tách models, hãy import thay cho định nghĩa này
+# Models
 # -----------------------------------------------------------------------------
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,20 +40,23 @@ class CongVan(db.Model):
     nhan_vien = db.Column(db.String(120))
     noi_dung = db.Column(db.Text)
     ngay_nv_nhan = db.Column(db.Date)
-    tinh_trang = db.Column(db.String(50))  # 'NV chưa lấy đơn', 'Đang giải quyết', 'Hoàn Thành', 'PKD trả về NV'...
+    tinh_trang = db.Column(db.String(50))  # 'NV chưa lấy đơn', 'Đang giải quyết', 'Hoàn Thành', 'PKD trả về NV'
 
 # -----------------------------------------------------------------------------
-# Login
+# Login manager
 # -----------------------------------------------------------------------------
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(uid):
-    return User.query.get(int(uid))
+    try:
+        return User.query.get(int(uid))
+    except Exception:
+        return None
 
 # -----------------------------------------------------------------------------
-# Hằng số giao diện
+# Constants / UI
 # -----------------------------------------------------------------------------
 APP_NAME = "Đơn Thư & Công Văn"
 
@@ -62,9 +67,6 @@ STATUS_CHOICES = [
     "PKD trả về NV",
 ]
 
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
 @app.context_processor
 def inject_globals():
     return {"APP_NAME": APP_NAME}
@@ -75,7 +77,7 @@ def page_url(num: int):
     return url_for("dashboard", **args)
 
 # -----------------------------------------------------------------------------
-# Khởi tạo mặc định (chạy một lần khi DB trống)
+# DB init + seed users
 # -----------------------------------------------------------------------------
 def ensure_seed_users():
     if not User.query.first():
@@ -92,7 +94,7 @@ with app.app_context():
     ensure_seed_users()
 
 # -----------------------------------------------------------------------------
-# Login/Logout
+# Auth routes
 # -----------------------------------------------------------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -106,6 +108,20 @@ def login():
         flash("Sai tài khoản hoặc mật khẩu", "error")
     return render_template("login.html")
 
+@app.route("/quick_login")
+def quick_login():
+    """Đăng nhập nhanh vào tài khoản staff mặc định (chỉ xem)."""
+    staff_u = os.getenv("DEFAULT_STAFF_USERNAME", "nhanvien")
+    staff_p = os.getenv("DEFAULT_STAFF_PASSWORD", "nhanvien123")
+    user = User.query.filter_by(username=staff_u, password=staff_p, role="staff").first()
+    if not user:
+        user = User(username=staff_u, password=staff_p, role="staff")
+        db.session.add(user)
+        db.session.commit()
+    login_user(user)
+    session["quick"] = True
+    return redirect(url_for("dashboard"))
+
 @app.route("/logout")
 def logout():
     if current_user.is_authenticated:
@@ -113,12 +129,12 @@ def logout():
     return redirect(url_for("login"))
 
 # -----------------------------------------------------------------------------
-# DASHBOARD (an toàn biến)
+# Dashboard
 # -----------------------------------------------------------------------------
 @app.route("/")
 @login_required
 def dashboard():
-    # --- Lọc ---
+    # --- Build filter query an toàn ---
     q = CongVan.query
 
     ten = request.args.get("ten", "").strip()
@@ -156,7 +172,7 @@ def dashboard():
     if kw:
         q = q.filter(CongVan.noi_dung.ilike(f"%{kw}%"))
 
-    # --- Phân trang ---
+    # --- Pagination ---
     try:
         page = max(int(request.args.get("page", 1)), 1)
     except ValueError:
@@ -170,7 +186,6 @@ def dashboard():
         chua_lay = CongVan.query.filter_by(tinh_trang="NV chưa lấy đơn").order_by(CongVan.id.desc()).all()
     except Exception:
         chua_lay = []
-
     try:
         dang_giai_quyet = CongVan.query.filter_by(tinh_trang="Đang giải quyết").order_by(CongVan.id.desc()).all()
     except Exception:
@@ -181,7 +196,6 @@ def dashboard():
     latest_nam = None
     hoan_thanh_by_loai = []
     try:
-        # tìm bản ghi hoàn thành mới nhất theo năm/tháng
         last = (
             db.session.query(CongVan.nam, CongVan.thang)
             .filter(CongVan.tinh_trang == "Hoàn Thành")
@@ -215,18 +229,15 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
-        # danh sách & pager
         items=items, pager=pagination, page_url=page_url,
-        # thống kê
         chua_lay=chua_lay, dang_giai_quyet=dang_giai_quyet,
         hoan_thanh_by_loai=hoan_thanh_by_loai,
         latest_thang=latest_thang, latest_nam=latest_nam,
-        # filter options
         loai_options=loai_options, STATUS_CHOICES=STATUS_CHOICES,
     )
 
 # -----------------------------------------------------------------------------
-# Các route CRUD khác (rút gọn – giữ nguyên nếu bạn đã có)
+# CRUD tối thiểu
 # -----------------------------------------------------------------------------
 @app.route("/congvan/<int:id>")
 @login_required
@@ -290,7 +301,7 @@ def congvan_delete(id):
     return redirect(url_for("dashboard"))
 
 # -----------------------------------------------------------------------------
-# Error pages (đẹp + không lộ stack lên user)
+# Error pages
 # -----------------------------------------------------------------------------
 @app.errorhandler(404)
 def _404(e):
@@ -298,7 +309,7 @@ def _404(e):
 
 @app.errorhandler(500)
 def _500(e):
-    # Xem log ở Render Logs; user thấy trang nhẹ nhàng
+    # Log chi tiết xem trong Render Logs
     return render_template("error.html", code=500, message="Lỗi máy chủ"), 500
 
 # -----------------------------------------------------------------------------
