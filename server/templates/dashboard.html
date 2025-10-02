@@ -1,7 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Tìm kiếm -->
+<!-- Thống kê trạng thái (2 thẻ) — ĐƯA LÊN TRÊN -->
+<div class="section" style="background:#e8faf7">
+  <span class="icon" style="background:#d1fae5;color:#065f46">📊</span>
+  Thống kê theo tình trạng
+</div>
+<div class="grid md:grid-cols-2 gap-4 mb-6">
+  <div class="stat stat-teal">
+    <div class="font-extrabold mb-1">NV chưa lấy</div>
+    <div class="text-sm text-gray-600">{{ chua_lay|length }} hồ sơ</div>
+  </div>
+  <div class="stat stat-amber">
+    <div class="font-extrabold mb-1">Đang giải quyết</div>
+    <div class="text-sm text-gray-600">{{ dang_giai_quyet|length }} hồ sơ</div>
+  </div>
+</div>
+
+<!-- Hoàn thành theo Loại đơn thư (tháng gần nhất) -->
+<div class="section">
+  <span class="icon">🗂️</span> Hoàn thành theo Loại đơn thư
+</div>
+<div class="card p-5 mb-6">
+  <div class="mb-3 text-sm text-gray-600">
+    {% if latest_thang and latest_nam %} Tháng {{ '%02d'|format(latest_thang) }}/{{ latest_nam }} {% else %} Chưa có dữ liệu {% endif %}
+  </div>
+  <div class="overflow-x-auto rounded-lg border">
+    <table class="min-w-full text-sm">
+      <thead class="th">
+        <tr>
+          <th class="text-left px-3 py-2">Loại đơn thư</th>
+        <th class="text-right px-3 py-2">Số lượng</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% if hoan_thanh_by_loai %}
+          {% for loai, cnt in hoan_thanh_by_loai %}
+          <tr class="odd:bg-white even:bg-gray-50">
+            <td class="px-3 py-2">{{ loai }}</td>
+            <td class="px-3 py-2 text-right font-semibold">{{ cnt }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td class="px-3 py-2" colspan="2">Không có dữ liệu.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Tìm kiếm (được đưa xuống dưới) -->
 <div class="section"><span class="icon">🔎</span> Tìm kiếm công văn</div>
 <div class="card p-5 mb-6">
   <form method="get" action="{{ url_for('dashboard') }}" class="space-y-3">
@@ -62,55 +110,11 @@
   </form>
 </div>
 
-<!-- Thống kê trạng thái (2 thẻ) -->
-<div class="section" style="background:#e8faf7"><span class="icon" style="background:#d1fae5;color:#065f46">📊</span> Thống kê theo tình trạng</div>
-<div class="grid md:grid-cols-2 gap-4 mb-6">
-  <div class="stat stat-teal">
-    <div class="font-extrabold mb-1">NV chưa lấy</div>
-    <div class="text-sm text-gray-600">
-      {{ chua_lay|length }} hồ sơ
-    </div>
-  </div>
-  <div class="stat stat-amber">
-    <div class="font-extrabold mb-1">Đang giải quyết</div>
-    <div class="text-sm text-gray-600">
-      {{ dang_giai_quyet|length }} hồ sơ
-    </div>
-  </div>
+<!-- Bảng danh sách (giữ nguyên) -->
+<div class="section" style="background:#fff6e6">
+  <span class="icon" style="background:#ffedd5;color:#9a3412">📄</span>
+  Bảng công văn
 </div>
-
-<!-- Hoàn thành theo loại đơn thư (tháng gần nhất) -->
-<div class="section"><span class="icon">🗂️</span> Hoàn thành theo Loại đơn thư</div>
-<div class="card p-5 mb-6">
-  <div class="mb-3 text-sm text-gray-600">
-    {% if latest_thang and latest_nam %} Tháng {{ '%02d'|format(latest_thang) }}/{{ latest_nam }} {% else %} Chưa có dữ liệu {% endif %}
-  </div>
-  <div class="overflow-x-auto rounded-lg border">
-    <table class="min-w-full text-sm">
-      <thead class="th">
-        <tr>
-          <th class="text-left px-3 py-2">Loại đơn thư</th>
-          <th class="text-right px-3 py-2">Số lượng</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y">
-        {% if hoan_thanh_by_loai %}
-          {% for loai, cnt in hoan_thanh_by_loai %}
-          <tr class="odd:bg-white even:bg-gray-50">
-            <td class="px-3 py-2">{{ loai }}</td>
-            <td class="px-3 py-2 text-right font-semibold">{{ cnt }}</td>
-          </tr>
-          {% endfor %}
-        {% else %}
-          <tr><td class="px-3 py-2" colspan="2">Không có dữ liệu.</td></tr>
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Bảng danh sách -->
-<div class="section" style="background:#fff6e6"><span class="icon" style="background:#ffedd5;color:#9a3412">📄</span> Bảng công văn</div>
 <div class="card p-5">
   <div class="overflow-x-auto rounded-lg border">
     <table class="min-w-full text-sm">
