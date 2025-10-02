@@ -36,6 +36,9 @@
     <h4>Hoàn thành theo Loại (tháng gần nhất)</h4>
     {% if latest_thang and latest_nam %}
       <div class="pill" style="margin-top:6px">Tháng {{ latest_thang }} / {{ latest_nam }}</div>
+      <div class="pill" style="margin-top:6px">
+        Hoàn thành: {{ completed_in_month }} / {{ total_in_month }} ({{ (completed_in_month*100//(total_in_month or 1)) }}%)
+      </div>
     {% endif %}
     <div class="list" style="margin-top:10px">
       {% if hoan_thanh_by_loai %}
@@ -73,21 +76,26 @@
     <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" style="grid-column:span 5;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
     <select name="tinh_trang" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
       <option value="">Tình trạng</option>
-      {% for s in STATUS_CHOICES if s != 'PKD trả về NV' %}
+      {% for s in STATUS_CHOICES %}
         <option value="{{ s }}" {% if request.args.get('tinh_trang')==s %}selected{% endif %}>{{ s }}</option>
       {% endfor %}
     </select>
-    <div style="grid-column:span 6;display:flex;gap:8px">
+    <div style="grid-column:span 6;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn brand" type="submit">Tìm kiếm</button>
       <a class="btn" href="{{ url_for('dashboard') }}">Làm mới</a>
+
+      {# Xuất Excel khi có loai + tình_trang và có ít nhất 1 kết quả trên trang hiện tại #}
+      {% if request.args.get('loai') and request.args.get('tinh_trang') and items|length > 0 %}
+        <a class="btn" href="{{ url_for('export_excel') }}?{{ request.query_string|safe }}">Xuất Excel</a>
+      {% endif %}
     </div>
   </form>
 </div>
 
-<!-- BẢNG DỮ LIỆU -->
+<!-- BẢNG DỮ LIỆU (cuộn) -->
 <div class="card" style="margin-top:14px">
   <h3 style="margin:0 0 8px 0">Bảng công văn</h3>
-  <div style="overflow:auto">
+  <div class="table-wrap">
     <table>
       <thead>
         <tr>
