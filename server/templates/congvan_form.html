@@ -1,93 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-3xl mx-auto">
-  <div class="card p-6">
-    <h1 class="text-xl heading mb-4">
-      {% if mode=='new' %}Thêm công văn{% else %}Sửa công văn{% endif %}
-    </h1>
-
-    {% if mode=='new' %}
-      <div class="mb-3 text-sm text-gray-600">
-        Mã công văn sẽ được <b>tự sinh</b> theo Tháng/Năm sau khi lưu (vd: CV-202501-0001).
-      </div>
-    {% else %}
-      <div class="mb-3 text-sm">
-        Mã công văn: <span class="px-2 py-1 rounded-lg bg-gray-100 border">{{ item.ma }}</span>
-      </div>
-    {% endif %}
-
-    <form method="post" class="grid md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Loại đơn thư</label>
-        <input name="loai_don_thu" list="loai_list" value="{{ item.loai_don_thu if item else '' }}" class="input" />
-        {% if loai_options %}
-        <datalist id="loai_list">
-          {% for opt in loai_options %}<option value="{{ opt }}"></option>{% endfor %}
-        </datalist>
-        {% endif %}
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tháng</label>
-        <input name="thang" type="number" min="1" max="12" value="{{ (item.thang if item and item.thang) or today.month }}" class="input" />
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Năm</label>
-        <input name="nam" type="number" value="{{ (item.nam if item and item.nam) or today.year }}" class="input" />
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Mã KH</label>
-        <input name="ma_kh" value="{{ item.ma_kh if item else '' }}" class="input" />
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tên *</label>
-        <input name="ten" required value="{{ item.ten if item else '' }}" class="input" />
-      </div>
-
-      <div class="md:col-span-2">
-        <label class="block text-sm text-gray-600 mb-1">Địa chỉ</label>
-        <input name="dia_chi" value="{{ item.dia_chi if item else '' }}" class="input" />
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Nhân viên</label>
-        <input name="nhan_vien" value="{{ item.nhan_vien if item else '' }}" class="input" />
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Ngày NV nhận</label>
-        <input type="date" name="ngay_nv_nhan"
-               value="{{ item.ngay_nv_nhan.strftime('%Y-%m-%d') if item and item.ngay_nv_nhan else today.strftime('%Y-%m-%d') }}"
-               class="input" />
-      </div>
-
-      <div class="md:col-span-2">
-        <label class="block text-sm text-gray-600 mb-1">Nội dung đơn</label>
-        <textarea name="noi_dung" rows="4" class="textarea">{{ item.noi_dung if item else '' }}</textarea>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tình trạng xử lý</label>
-        <select name="tinh_trang" class="select">
-          {% for st in STATUS_CHOICES %}
-            <option value="{{ st }}" {% if item and item.tinh_trang==st %}selected{% endif %}>{{ st }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Ghi chú</label>
-        <input name="ghi_chu" value="{{ item.ghi_chu if item else '' }}" class="input" />
-      </div>
-
-      <div class="md:col-span-2 flex gap-2">
-        <button class="btn btn-primary" type="submit">Lưu</button>
-        <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Huỷ</a>
-      </div>
-    </form>
-  </div>
+<div class="card" style="max-width:900px;margin:0 auto">
+  <h3 style="margin:0 0 8px 0">{{ 'Sửa' if r else 'Thêm' }} công văn</h3>
+  <form method="post" style="display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))">
+    <label>Loại đơn thư
+      <input name="loai_don_thu" value="{{ r.loai_don_thu if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Nhân viên
+      <input name="nhan_vien" value="{{ r.nhan_vien if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Tháng
+      <input name="thang" value="{{ r.thang if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Năm
+      <input name="nam" value="{{ r.nam if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Mã KH
+      <input name="ma_kh" value="{{ r.ma_kh if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Tên KH
+      <input name="ten" value="{{ r.ten if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Địa chỉ
+      <input name="dia_chi" value="{{ r.dia_chi if r else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label>Ngày NV nhận
+      <input type="date" name="ngay_nv_nhan" value="{{ r.ngay_nv_nhan if r and r.ngay_nv_nhan else '' }}" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    </label>
+    <label style="grid-column:span 2">Nội dung
+      <textarea name="noi_dung" rows="4" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">{{ r.noi_dung if r else '' }}</textarea>
+    </label>
+    <label style="grid-column:span 2">Tình trạng
+      <select name="tinh_trang" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+        {% for s in STATUS_CHOICES %}
+          <option value="{{ s }}" {% if r and r.tinh_trang==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div style="grid-column:span 2;display:flex;gap:8px">
+      <button class="btn brand" type="submit">Lưu</button>
+      <a class="btn" href="{{ url_for('dashboard') }}">Huỷ</a>
+    </div>
+  </form>
 </div>
 {% endblock %}
