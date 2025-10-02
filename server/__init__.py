@@ -1,17 +1,15 @@
 from datetime import datetime
 import os
-from types import SimpleNamespace
-
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, login_user, logout_user, current_user, login_required, UserMixin
 )
-from sqlalchemy import text  # dùng cho /dbz test kết nối
+from sqlalchemy import text
 
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # App & DB config (sửa postgres:// -> postgresql://)
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 db_url = os.getenv("DATABASE_URL", "sqlite:///data.db")
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -23,9 +21,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # Models
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -46,9 +44,9 @@ class CongVan(db.Model):
     ngay_nv_nhan = db.Column(db.Date)
     tinh_trang = db.Column(db.String(50))  # 'NV chưa lấy đơn', 'Đang giải quyết', 'Hoàn Thành', 'PKD trả về NV'
 
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # Login
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -59,24 +57,25 @@ def load_user(uid):
     except Exception:
         return None
 
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # UI constants
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 APP_NAME = "Đơn Thư & Công Văn"
 STATUS_CHOICES = ["NV chưa lấy đơn", "Đang giải quyết", "Hoàn Thành", "PKD trả về NV"]
 
 @app.context_processor
 def inject_globals():
-    return {"APP_NAME": APP_NAME}
+    # Cho tất cả template dùng chung
+    return {"APP_NAME": APP_NAME, "STATUS_CHOICES": STATUS_CHOICES}
 
 def page_url(num: int):
     args = dict(request.args)
     args["page"] = num
     return url_for("dashboard", **args)
 
-# ---------------------------------------------------------------------
-# Health check / Kết nối DB
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
+# Health check / DB check
+# -------------------------------------------------------
 @app.route("/healthz")
 def healthz():
     return "ok", 200
@@ -90,9 +89,9 @@ def dbz():
         app.logger.exception("DB check failed")
         return f"db-fail: {e}", 500
 
-# ---------------------------------------------------------------------
-# Init DB lười (Flask 3.1 không có before_first_request)
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
+# Lazy init DB (Flask 3.1)
+# -------------------------------------------------------
 _init_done = False
 
 def ensure_seed_users():
@@ -115,13 +114,12 @@ def _lazy_init_db_once():
         ensure_seed_users()
         _init_done = True
     except Exception:
-        # Đừng làm vỡ health-check / request đầu
-        app.logger.exception("Init DB failed (ignored at startup)")
-        _init_done = True  # tránh lặp vô hạn; dùng /dbz để kiểm tra thủ công
+        app.logger.exception("Init DB failed (ignored)")
+        _init_done = True
 
-# ---------------------------------------------------------------------
-# Auth
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
+# Auth routes
+# -------------------------------------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -136,7 +134,7 @@ def login():
 
 @app.route("/quick_login")
 def quick_login():
-    """Đăng nhập nhanh (staff)."""
+    # đăng nhập nhanh role staff
     staff_u = os.getenv("DEFAULT_STAFF_USERNAME", "nhanvien")
     staff_p = os.getenv("DEFAULT_STAFF_PASSWORD", "nhanvien123")
     user = User.query.filter_by(username=staff_u, password=staff_p, role="staff").first()
@@ -154,23 +152,29 @@ def logout():
         logout_user()
     return redirect(url_for("login"))
 
-# ---------------------------------------------------------------------
-# Dashboard – CHỐNG 500 TUYỆT ĐỐI
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
+# Users (admin-only)
+# -------------------------------------------------------
+@app.route("/users")
+@login_required
+def users():
+    if current_user.role != "admin":
+        flash("Bạn không có quyền.", "error")
+        return redirect(url_for("dashboard"))
+    lst = User.query.order_by(User.id.asc()).all()
+    return render_template("users.html", users=lst)
+
+# -------------------------------------------------------
+# Dashboard (thống kê mềm + fallback)
+# -------------------------------------------------------
 @app.route("/")
 @login_required
 def dashboard():
-    # Mặc định rỗng để nếu DB lỗi vẫn render không 500
-    items = []
-    pagination = None
-    chua_lay = []
-    dang_giai_quyet = []
-    latest_thang = None
-    latest_nam = None
-    hoan_thanh_by_loai = []
-    loai_options = []
+    items = []; pagination = None
+    chua_lay = []; dang_giai_quyet = []
+    latest_thang = None; latest_nam = None
+    hoan_thanh_by_loai = []; loai_options = []
 
-    # --- Lọc / truy vấn bảo vệ ---
     try:
         q = CongVan.query
 
@@ -183,25 +187,22 @@ def dashboard():
         tinh_trang = request.args.get("tinh_trang", "").strip()
         kw = request.args.get("q", "").strip()
 
-        if ten:
-            q = q.filter(CongVan.ten.ilike(f"%{ten}%"))
-        if ma_kh:
-            q = q.filter(CongVan.ma_kh.ilike(f"%{ma_kh}%"))
+        if ten:     q = q.filter(CongVan.ten.ilike(f"%{ten}%"))
+        if ma_kh:   q = q.filter(CongVan.ma_kh.ilike(f"%{ma_kh}%"))
         if thang:
             try: q = q.filter(CongVan.thang == int(thang))
             except ValueError: pass
         if nam:
             try: q = q.filter(CongVan.nam == int(nam))
             except ValueError: pass
-        if dia_chi:
-            q = q.filter(CongVan.dia_chi.ilike(f"%{dia_chi}%"))
+        if dia_chi: q = q.filter(CongVan.dia_chi.ilike(f"%{dia_chi}%"))
         if loai:
             if loai == "__EMPTY__":
                 q = q.filter((CongVan.loai_don_thu == "") | (CongVan.loai_don_thu.is_(None)))
             else:
                 q = q.filter(CongVan.loai_don_thu == loai)
         if tinh_trang:
-            q = q.filter(CongVan.tinh_trang == tinh_trang)
+            q = q.filter(CongVan.tinh_trang.ilike(f"%{tinh_trang}%"))
         if kw:
             q = q.filter(CongVan.noi_dung.ilike(f"%{kw}%"))
 
@@ -214,37 +215,41 @@ def dashboard():
         pagination = q.order_by(CongVan.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
         items = pagination.items
 
-        # Thống kê
-        chua_lay = CongVan.query.filter_by(tinh_trang="NV chưa lấy đơn").order_by(CongVan.id.desc()).all()
-        dang_giai_quyet = CongVan.query.filter_by(tinh_trang="Đang giải quyết").order_by(CongVan.id.desc()).all()
+        # === Thống kê mềm (không lệ thuộc gõ đúng 100%) ===
+        chua_lay = (CongVan.query
+                    .filter(CongVan.tinh_trang.ilike("%chưa lấy%"))
+                    .order_by(CongVan.id.desc()).all())
 
-        # Hoàn thành theo loại (tháng gần nhất)
-        last = (
-            db.session.query(CongVan.nam, CongVan.thang)
-            .filter(CongVan.tinh_trang == "Hoàn Thành")
-            .order_by(CongVan.nam.desc(), CongVan.thang.desc())
-            .first()
-        )
+        dang_giai_quyet = (CongVan.query
+                           .filter(CongVan.tinh_trang.ilike("%đang giải%"))
+                           .order_by(CongVan.id.desc()).all())
+
+        # Hoàn thành theo loại — ưu tiên tháng/năm gần nhất; thiếu thì đếm tổng
+        last = (db.session.query(CongVan.nam, CongVan.thang)
+                .filter(CongVan.tinh_trang.ilike("%hoàn thành%"),
+                        CongVan.nam.isnot(None), CongVan.thang.isnot(None))
+                .order_by(CongVan.nam.desc(), CongVan.thang.desc())
+                .first())
         if last:
-            latest_nam, latest_thang = last[0], last[1]
-            rows = (
-                db.session.query(CongVan.loai_don_thu, db.func.count())
-                .filter(
-                    CongVan.tinh_trang == "Hoàn Thành",
-                    CongVan.nam == latest_nam,
-                    CongVan.thang == latest_thang,
-                ).group_by(CongVan.loai_don_thu).all()
-            )
+            latest_nam, latest_thang = int(last[0]), int(last[1])
+            rows = (db.session.query(CongVan.loai_don_thu, db.func.count())
+                    .filter(CongVan.tinh_trang.ilike("%hoàn thành%"),
+                            CongVan.nam == latest_nam, CongVan.thang == latest_thang)
+                    .group_by(CongVan.loai_don_thu).all())
+            hoan_thanh_by_loai = [(r[0] or "(không ghi)", int(r[1])) for r in rows]
+        else:
+            rows = (db.session.query(CongVan.loai_don_thu, db.func.count())
+                    .filter(CongVan.tinh_trang.ilike("%hoàn thành%"))
+                    .group_by(CongVan.loai_don_thu).all())
             hoan_thanh_by_loai = [(r[0] or "(không ghi)", int(r[1])) for r in rows]
 
-        # Options
+        # Options cho "Loại đơn thư"
         loai_rows = db.session.query(CongVan.loai_don_thu).distinct().all()
         loai_options = [r[0] for r in loai_rows if r[0]]
 
     except Exception:
-        # Ghi log, nhưng vẫn render dữ liệu rỗng để KHÔNG 500
         app.logger.exception("dashboard query failed; rendering empty dataset")
-        pagination = None  # template đã có if pager ...
+        pagination = None
 
     return render_template(
         "dashboard.html",
@@ -255,9 +260,9 @@ def dashboard():
         loai_options=loai_options, STATUS_CHOICES=STATUS_CHOICES,
     )
 
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # CRUD
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 @app.route("/congvan/<int:id>")
 @login_required
 def congvan_detail(id):
@@ -319,18 +324,9 @@ def congvan_delete(id):
     db.session.commit()
     return redirect(url_for("dashboard"))
 
-@app.route("/users")
-@login_required
-def users():
-    if current_user.role != "admin":
-        flash("Bạn không có quyền.", "error")
-        return redirect(url_for("dashboard"))
-    lst = User.query.order_by(User.id.asc()).all()
-    return render_template("users.html", users=lst)
-
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # Error pages
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 @app.errorhandler(404)
 def _404(e):
     return render_template("error.html", code=404, message="Không tìm thấy"), 404
@@ -339,8 +335,8 @@ def _404(e):
 def _500(e):
     return render_template("error.html", code=500, message="Lỗi máy chủ"), 500
 
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 # Run local
-# ---------------------------------------------------------------------
+# -------------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
