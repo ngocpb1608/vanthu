@@ -1,22 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-md mx-auto">
-  <div class="card p-6">
-    <h1 class="text-2xl heading mb-4">Đăng nhập</h1>
-    <form method="post" class="space-y-4">
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tài khoản</label>
-        <input class="input" name="username" required />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Mật khẩu</label>
-        <input class="input" type="password" name="password" required />
-      </div>
-      <div class="flex gap-2">
-        <button class="btn btn-primary" type="submit">Đăng nhập</button>
-        <a class="btn btn-ghost" href="{{ url_for('quick_login') }}">Đăng nhập nhanh (chỉ xem)</a>
-      </div>
-    </form>
-  </div>
+<div class="card" style="max-width:520px;margin:40px auto">
+  <h2 style="margin:0 0 12px 0">Đăng nhập</h2>
+  <form method="post" style="display:grid;gap:10px">
+    <label>Tài khoản
+      <input name="username" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"/>
+    </label>
+    <label>Mật khẩu
+      <input type="password" name="password" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"/>
+    </label>
+    <div style="display:flex;gap:8px">
+      <button class="btn brand" type="submit">Đăng nhập</button>
+      <a class="btn" href="{{ url_for('quick_login') }}">Đăng nhập nhanh (chỉ xem)</a>
+    </div>
+  </form>
 </div>
 {% endblock %}
