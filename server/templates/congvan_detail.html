@@ -1,27 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <h3 style="margin-top:0">Chi tiết công văn #{{ r.id }}</h3>
-  <table>
-    <tr><th style="width:180px">Mã</th><td>{{ r.ma or '' }}</td></tr>
-    <tr><th>Loại đơn thư</th><td>{{ r.loai_don_thu or '' }}</td></tr>
-    <tr><th>Tháng / Năm</th><td>{{ r.thang or '' }} / {{ r.nam or '' }}</td></tr>
-    <tr><th>Mã KH</th><td>{{ r.ma_kh or '' }}</td></tr>
-    <tr><th>Tên KH</th><td>{{ r.ten or '' }}</td></tr>
-    <tr><th>Địa chỉ</th><td>{{ r.dia_chi or '' }}</td></tr>
-    <tr><th>Nhân viên</th><td>{{ r.nhan_vien or '' }}</td></tr>
-    <tr><th>Ngày NV nhận</th><td>{{ r.ngay_nv_nhan or '' }}</td></tr>
-    <tr><th>Tình trạng</th><td>{{ r.tinh_trang or '' }}</td></tr>
-    <tr><th>Nội dung</th><td style="white-space:pre-wrap">{{ r.noi_dung or '' }}</td></tr>
-  </table>
-
-  {% if current_user.role == 'admin' %}
-  <div style="margin-top:10px;display:flex;gap:8px">
-    <a class="btn" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
-    <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" onsubmit="return confirm('Xoá công văn này?')">
-      <button class="btn" type="submit">Xoá</button>
-    </form>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <h3 class="heading" style="margin:0">Chi tiết công văn</h3>
+    <div style="display:flex;gap:8px">
+      {% if current_user.role == 'admin' %}
+        <a class="btn" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
+        <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" onsubmit="return confirm('Xoá công văn?')">
+          <button class="btn" type="submit">Xoá</button>
+        </form>
+      {% endif %}
+      <a class="btn" href="{{ url_for('dashboard') }}">Quay lại</a>
+    </div>
   </div>
-  {% endif %}
+
+  <table style="margin-top:12px">
+    <tbody>
+      <tr><th style="text-align:left;width:180px">Mã KH</th><td>{{ r.ma_kh or ('#' ~ r.id) }}</td></tr>
+      <tr><th style="text-align:left">Loại đơn thư</th><td>{{ r.loai_don_thu or '' }}</td></tr>
+      <tr><th style="text-align:left">Tháng/Năm</th><td>{{ r.thang or '' }} / {{ r.nam or '' }}</td></tr>
+      <tr><th style="text-align:left">Tên KH</th><td>{{ r.ten or '' }}</td></tr>
+      <tr><th style="text-align:left">Địa chỉ</th><td>{{ r.dia_chi or '' }}</td></tr>
+      <tr><th style="text-align:left">Nhân viên</th><td>{{ r.nhan_vien or '' }}</td></tr>
+      <tr><th style="text-align:left">Ngày NV nhận</th><td>{{ r.ngay_nv_nhan or '' }}</td></tr>
+      <tr><th style="text-align:left">Tình trạng</th><td>{{ r.tinh_trang or '' }}</td></tr>
+      <tr><th style="text-align:left">Kết quả</th><td>{{ r.ket_qua or '' }}</td></tr>
+      <tr><th style="text-align:left;vertical-align:top">Nội dung</th><td style="white-space:pre-wrap">{{ r.noi_dung or '' }}</td></tr>
+      <tr><th style="text-align:left;vertical-align:top">Ghi chú</th><td style="white-space:pre-wrap">{{ r.ghi_chu or '' }}</td></tr>
+    </tbody>
+  </table>
 </div>
 {% endblock %}
