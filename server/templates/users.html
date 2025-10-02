@@ -3,24 +3,14 @@
 <div class="card">
   <h2 style="margin:0 0 12px 0">Người dùng</h2>
   <div style="overflow:auto">
-    <table style="width:100%;border-collapse:collapse">
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb">ID</th>
-          <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb">Tài khoản</th>
-          <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb">Quyền</th>
-        </tr>
-      </thead>
+    <table>
+      <thead><tr><th>ID</th><th>Tài khoản</th><th>Quyền</th></tr></thead>
       <tbody>
-      {% for u in users %}
-        <tr>
-          <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ u.id }}</td>
-          <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ u.username }}</td>
-          <td style="padding:8px;border-bottom:1px solid #f1f5f9">{{ u.role }}</td>
-        </tr>
-      {% else %}
-        <tr><td colspan="3" style="padding:8px;color:#64748b">Chưa có người dùng</td></tr>
-      {% endfor %}
+        {% for u in users %}
+          <tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.role }}</td></tr>
+        {% else %}
+          <tr><td colspan="3" style="color:#64748b">Chưa có người dùng</td></tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
