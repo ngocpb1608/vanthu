@@ -319,6 +319,15 @@ def congvan_delete(id):
     db.session.commit()
     return redirect(url_for("dashboard"))
 
+@app.route("/users")
+@login_required
+def users():
+    if current_user.role != "admin":
+        flash("Bạn không có quyền.", "error")
+        return redirect(url_for("dashboard"))
+    lst = User.query.order_by(User.id.asc()).all()
+    return render_template("users.html", users=lst)
+
 # ---------------------------------------------------------------------
 # Error pages
 # ---------------------------------------------------------------------
