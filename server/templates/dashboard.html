@@ -5,8 +5,14 @@
 <div class="section" style="background:#e8faf7">
   <span class="icon" style="background:#d1fae5;color:#065f46">📊</span>
   Thống kê theo tình trạng
+{# === THỐNG KÊ THEO TÌNH TRẠNG (ĐẶT Ở TRÊN) === #}
+<div class="section" style="background:#e8faf7">
+  <span class="icon" style="background:#d1fae5;color:#065f46">📊</span>
+  Thống kê theo tình trạng
 </div>
-<div class="grid md:grid-cols-2 gap-4 mb-6">
+
+<!-- 2 thẻ nhanh -->
+<div class="grid md:grid-cols-2 gap-4 mb-4">
   <div class="stat stat-teal">
     <div class="font-extrabold mb-1">NV chưa lấy</div>
     <div class="text-sm text-gray-600">{{ chua_lay|length }} hồ sơ</div>
@@ -16,6 +22,46 @@
     <div class="text-sm text-gray-600">{{ dang_giai_quyet|length }} hồ sơ</div>
   </div>
 </div>
+
+<!-- Bảng chi tiết NV chưa lấy (loại, tên KH, địa chỉ, nội dung, nhân viên) -->
+<div class="card p-5 mb-6">
+  <div class="mb-3 flex items-center justify-between">
+    <h3 class="text-lg heading">NV chưa lấy — chi tiết</h3>
+    <div class="text-sm text-gray-600">Tổng {{ chua_lay|length }} hồ sơ</div>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border max-h-[28rem] overflow-y-auto">
+    <table class="min-w-full text-sm">
+      <thead class="th">
+        <tr>
+          <th class="text-left px-3 py-2">Mã</th>
+          <th class="text-left px-3 py-2">Loại đơn thư</th>
+          <th class="text-left px-3 py-2">Tên KH</th>
+          <th class="text-left px-3 py-2">Địa chỉ</th>
+          <th class="text-left px-3 py-2">Nội dung</th>
+          <th class="text-left px-3 py-2">Nhân viên</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for r in chua_lay %}
+        <tr class="odd:bg-white even:bg-gray-50">
+          <td class="px-3 py-2 font-semibold">
+            <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-[var(--pri)] hover:underline">{{ r.ma }}</a>
+          </td>
+          <td class="px-3 py-2">{{ r.loai_don_thu }}</td>
+          <td class="px-3 py-2">{{ r.ten }}</td>
+          <td class="px-3 py-2">{{ r.dia_chi }}</td>
+          <td class="px-3 py-2 truncate max-w-[22rem]" title="{{ r.noi_dung }}">{{ r.noi_dung }}</td>
+          <td class="px-3 py-2">{{ r.nhan_vien }}</td>
+        </tr>
+        {% else %}
+        <tr><td class="px-3 py-2" colspan="6">Không có dữ liệu.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
 <!-- Hoàn thành theo Loại đơn thư (tháng gần nhất) -->
 <div class="section">
