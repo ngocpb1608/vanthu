@@ -1,17 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+  /* Cho phép mở rộng danh sách trong ô thống kê */
+  .list.open{ max-height:70vh !important; }
+  .card-tools{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+</style>
+
 <!-- ===== THỐNG KÊ ===== -->
 <div class="card" style="margin-bottom:14px">
   <h3 class="heading">Thống kê</h3>
 
   <div class="stats">
-    <!-- NV CHƯA LẤY -->
+    <!-- NV CHƯA LẤY — CHI TIẾT + TOOLS -->
     <div class="stat-card stat-blue">
       <div class="stat-title">NV chưa lấy — chi tiết</div>
       <div class="num">{{ chua_lay|length }}</div>
+
       {% if chua_lay %}
-      <div class="list">
+      <div id="list-chualay" class="list">
         <table>
           <thead>
             <tr>
@@ -20,7 +27,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for r in chua_lay[:12] %}
+            {% for r in chua_lay %}
             <tr>
               <td style="white-space:nowrap">
                 {% if current_user.role == 'admin' %}
@@ -39,15 +46,31 @@
           </tbody>
         </table>
       </div>
+
+      <div class="card-tools">
+        {% if chua_lay|length > 12 %}
+          <button class="btn small" type="button" onclick="toggleList('list-chualay', this)" data-label="Xem tất cả ({{ chua_lay|length }})">
+            Xem tất cả ({{ chua_lay|length }})
+          </button>
+        {% endif %}
+        <!-- Lọc trang chỉ nhóm 'NV chưa lấy' -->
+        <a class="btn small" href="{{ url_for('dashboard', tinh_trang='NV chưa lấy đơn') }}">Lọc nhóm này</a>
+        <!-- Xuất Excel chỉ nhóm 'NV chưa lấy' -->
+        <form method="get" action="{{ url_for('export_table') }}">
+          <input type="hidden" name="tinh_trang" value="NV chưa lấy đơn">
+          <button class="btn small" type="submit">⬇️ Xuất Excel nhóm này</button>
+        </form>
+      </div>
       {% endif %}
     </div>
 
-    <!-- ĐANG GIẢI QUYẾT: CHI TIẾT -->
+    <!-- ĐANG GIẢI QUYẾT — CHI TIẾT + TOOLS -->
     <div class="stat-card stat-amber">
       <div class="stat-title">Đang giải quyết — chi tiết</div>
       <div class="num">{{ dang_giai_quyet|length }}</div>
+
       {% if dang_giai_quyet %}
-      <div class="list">
+      <div id="list-danggq" class="list">
         <table>
           <thead>
             <tr>
@@ -56,7 +79,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for r in dang_giai_quyet[:12] %}
+            {% for r in dang_giai_quyet %}
             <tr>
               <td style="white-space:nowrap">
                 {% if current_user.role == 'admin' %}
@@ -74,6 +97,21 @@
             {% endfor %}
           </tbody>
         </table>
+      </div>
+
+      <div class="card-tools">
+        {% if dang_giai_quyet|length > 12 %}
+          <button class="btn small" type="button" onclick="toggleList('list-danggq', this)" data-label="Xem tất cả ({{ dang_giai_quyet|length }})">
+            Xem tất cả ({{ dang_giai_quyet|length }})
+          </button>
+        {% endif %}
+        <!-- Lọc trang chỉ nhóm 'Đang giải quyết' -->
+        <a class="btn small" href="{{ url_for('dashboard', tinh_trang='Đang giải quyết') }}">Lọc nhóm này</a>
+        <!-- Xuất Excel chỉ nhóm 'Đang giải quyết' -->
+        <form method="get" action="{{ url_for('export_table') }}">
+          <input type="hidden" name="tinh_trang" value="Đang giải quyết">
+          <button class="btn small" type="submit">⬇️ Xuất Excel nhóm này</button>
+        </form>
       </div>
       {% endif %}
     </div>
@@ -122,6 +160,7 @@
     </select>
     <input name="thang" class="ipt" placeholder="Tháng" value="{{ request.args.get('thang','') }}">
     <input name="nam" class="ipt" placeholder="Năm" value="{{ request.args.get('nam','') }}">
+
     <input name="q" class="ipt" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" style="grid-column:span 5">
     <select name="tinh_trang" class="ipt">
       <option value="">Tình trạng</option>
@@ -207,4 +246,16 @@
   {% endif %}
 </div>
 {% endif %}
+
+<script>
+  function toggleList(id, btn){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('open');
+    const opened = el.classList.contains('open');
+    const base = btn.dataset.label || 'Xem tất cả';
+    btn.textContent = opened ? 'Thu gọn' : base;
+  }
+</script>
+
 {% endblock %}
