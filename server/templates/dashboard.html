@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ====================== THỐNG KÊ (ĐẶT LÊN TRÊN) ====================== -->
+<!-- ===== THỐNG KÊ (đặt trên cùng) ===== -->
 <div class="card" style="margin-bottom:14px">
-  <h3 style="margin:0 0 10px 0">Thống kê</h3>
+  <h3 class="heading">Thống kê</h3>
 
-  <!-- Hai ô thống kê chính -->
-  <div class="stats" style="display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));">
-    <div class="stat blue">
-      <h4>NV chưa lấy — chi tiết</h4>
+  <div class="stats">
+    <!-- NV chưa lấy: hiện Mã KH (click mở chi tiết) + các cột quan trọng -->
+    <div class="stat-card stat-blue">
+      <div class="stat-title">NV chưa lấy — chi tiết</div>
       <div class="num">{{ chua_lay|length }}</div>
       {% if chua_lay %}
       <div class="list">
@@ -17,14 +17,14 @@
             <tr>
               <th style="white-space:nowrap">Mã KH</th>
               <th>Loại</th>
-              <th>Tên KH</th>
+              <th>Tên</th>
               <th>Địa chỉ</th>
               <th>Nội dung</th>
               <th>NV</th>
             </tr>
           </thead>
           <tbody>
-          {% for r in chua_lay[:12] %}
+            {% for r in chua_lay[:12] %}
             <tr>
               <td style="white-space:nowrap">
                 {% if r.ma_kh %}
@@ -39,24 +39,25 @@
               <td style="max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
               <td>{{ r.nhan_vien or '' }}</td>
             </tr>
-          {% endfor %}
+            {% endfor %}
           </tbody>
         </table>
       </div>
       {% endif %}
     </div>
 
-    <div class="stat yellow">
-      <h4>Đang giải quyết</h4>
+    <!-- Đang giải quyết (nhấn nhá màu amber pastel) -->
+    <div class="stat-card stat-amber">
+      <div class="stat-title">Đang giải quyết</div>
       <div class="num">{{ dang_giai_quyet|length }}</div>
     </div>
   </div>
 
-  <!-- Hoàn thành theo Loại (tháng gần nhất) - vẫn trong khối Thống kê -->
+  <!-- Hoàn thành theo loại (tháng gần nhất) -->
   <div class="card" style="margin-top:12px;background:#fafcff">
-    <h4 style="margin:0 0 8px 0">Hoàn thành theo Loại (tháng gần nhất)</h4>
+    <div class="stat-title" style="margin-bottom:6px">Hoàn thành theo Loại (tháng gần nhất)</div>
     {% if latest_thang and latest_nam %}
-      <div class="pill" style="margin:6px 0">
+      <div class="chip" style="margin:6px 0">
         Tháng {{ latest_thang }}/{{ latest_nam }}
         {% if month_total %}
           · Hoàn thành <b>{{ month_completed }}</b> / Tổng <b>{{ month_total }}</b>
@@ -67,23 +68,23 @@
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
       {% if hoan_thanh_by_loai %}
         {% for loai,cnt in hoan_thanh_by_loai %}
-          <div class="pill" style="font-weight:600">{{ loai }}</div>
-          <div class="pill" style="text-align:right">{{ cnt }}</div>
+          <div class="chip" style="font-weight:600">{{ loai }}</div>
+          <div class="chip" style="text-align:right">{{ cnt }}</div>
         {% endfor %}
       {% else %}
-        <div>Không có dữ liệu.</div>
+        <div class="muted">Không có dữ liệu.</div>
       {% endif %}
     </div>
   </div>
 </div>
 
-<!-- ====================== TÌM KIẾM ====================== -->
+<!-- ===== TÌM KIẾM ===== -->
 <div class="card">
-  <h3 style="margin:0 0 8px 0">Tìm kiếm công văn</h3>
-  <form method="get" style="display:grid;gap:8px;grid-template-columns:repeat(6,minmax(0,1fr))">
-    <input name="ten"   placeholder="Tên KH" value="{{ request.args.get('ten','') }}"   class="ipt">
-    <input name="ma_kh" placeholder="Mã KH"  value="{{ request.args.get('ma_kh','') }}" class="ipt">
-    <input name="dia_chi" placeholder="Địa chỉ" value="{{ request.args.get('dia_chi','') }}" class="ipt">
+  <h3 class="heading">Tìm kiếm công văn</h3>
+  <form method="get" class="row cols-6">
+    <input name="ten"    class="ipt" placeholder="Tên KH"  value="{{ request.args.get('ten','') }}">
+    <input name="ma_kh"  class="ipt" placeholder="Mã KH"   value="{{ request.args.get('ma_kh','') }}">
+    <input name="dia_chi" class="ipt" placeholder="Địa chỉ" value="{{ request.args.get('dia_chi','') }}">
     <select name="loai" class="ipt">
       <option value="">Loại đơn thư</option>
       {% for lo in loai_options %}
@@ -91,10 +92,10 @@
       {% endfor %}
       <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(không ghi)</option>
     </select>
-    <input name="thang" placeholder="Tháng" value="{{ request.args.get('thang','') }}" class="ipt">
-    <input name="nam"   placeholder="Năm"   value="{{ request.args.get('nam','') }}"   class="ipt">
+    <input name="thang" class="ipt" placeholder="Tháng" value="{{ request.args.get('thang','') }}">
+    <input name="nam"   class="ipt" placeholder="Năm"   value="{{ request.args.get('nam','') }}">
 
-    <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" class="ipt" style="grid-column:span 5">
+    <input name="q" class="ipt" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" style="grid-column:span 5">
     <select name="tinh_trang" class="ipt">
       <option value="">Tình trạng</option>
       {% for s in STATUS_CHOICES %}
@@ -103,10 +104,9 @@
     </select>
 
     <div style="grid-column:span 6;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn brand" type="submit">Tìm kiếm</button>
+      <button class="btn brand" type="submit">🔍 Tìm kiếm</button>
       <a class="btn" href="{{ url_for('dashboard') }}">Làm mới</a>
-
-      <!-- Xuất Excel theo KẾT QUẢ HIỆN TẠI (không ràng buộc) -->
+      <!-- Xuất Excel theo kết quả hiện tại -->
       <form method="get" action="{{ url_for('export_table') }}" style="display:inline">
         {% for k,v in request.args.items() %}
           <input type="hidden" name="{{ k }}" value="{{ v }}">
@@ -117,10 +117,10 @@
   </form>
 </div>
 
-<!-- ====================== BẢNG CHI TIẾT ====================== -->
+<!-- ===== BẢNG CHI TIẾT ===== -->
 <div class="card" style="margin-top:14px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
-    <h3 style="margin:0">Bảng công văn</h3>
+    <h3 class="heading">Bảng công văn</h3>
     <form method="get" action="{{ url_for('export_table') }}" style="display:inline">
       {% for k,v in request.args.items() %}
         <input type="hidden" name="{{ k }}" value="{{ v }}">
@@ -129,9 +129,9 @@
     </form>
   </div>
 
-  <div style="overflow:auto; max-height:60vh; border:1px solid #e5e7eb; border-radius:12px">
+  <div style="overflow:auto; max-height:60vh; border:1px solid var(--ring); border-radius:12px">
     <table id="main-table">
-      <thead style="position:sticky; top:0; background:#fff; z-index:1">
+      <thead>
         <tr>
           <th>STT</th>
           <th>Tháng</th><th>Năm</th><th>Loại</th>
@@ -148,8 +148,7 @@
           <td>{{ r.thang or '' }}</td>
           <td>{{ r.nam or '' }}</td>
           <td>{{ r.loai_don_thu or '' }}</td>
-
-          <!-- YÊU CẦU 2: click vào MÃ KH để mở chi tiết -->
+          <!-- Mã KH là link mở chi tiết -->
           <td style="white-space:nowrap">
             {% if r.ma_kh %}
               <a href="{{ url_for('congvan_detail', id=r.id) }}" title="Xem chi tiết">{{ r.ma_kh }}</a>
@@ -157,7 +156,6 @@
               <a href="{{ url_for('congvan_detail', id=r.id) }}" title="Xem chi tiết">#{{ r.id }}</a>
             {% endif %}
           </td>
-
           <td>{{ r.ten or '' }}</td>
           <td>{{ r.dia_chi or '' }}</td>
           <td>{{ r.noi_dung or '' }}</td>
@@ -165,20 +163,19 @@
           <td>{{ r.ngay_nv_nhan or '' }}</td>
           <td>
             {% set t = (r.tinh_trang or '') %}
-            <span class="pill {% if 'Hoàn' in t or 'hoan' in t %}ok{% elif 'Đang' in t or 'dang' in t %}warn{% endif %}">{{ t }}</span>
+            <span class="chip {% if 'Hoàn' in t or 'hoan' in t %}ok{% elif 'Đang' in t or 'dang' in t %}warn{% endif %}">{{ t }}</span>
           </td>
-
           {% if current_user.role == 'admin' %}
           <td>
-            <a class="btn" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
+            <a class="btn small" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
             <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" style="display:inline" onsubmit="return confirm('Xoá công văn?')">
-              <button class="btn" type="submit">Xoá</button>
+              <button class="btn small" type="submit">Xoá</button>
             </form>
           </td>
           {% endif %}
         </tr>
         {% else %}
-        <tr><td colspan="12" style="color:#64748b">Không có dữ liệu.</td></tr>
+        <tr><td colspan="12" style="color:var(--muted)">Không có dữ liệu.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -187,7 +184,7 @@
   {% if pager and pager.pages > 1 %}
   <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
     {% if pager.has_prev %}<a class="btn" href="{{ page_url(pager.prev_num) }}">« Trước</a>{% endif %}
-    <span class="pill">Trang {{ pager.page }}/{{ pager.pages }}</span>
+    <span class="chip">Trang {{ pager.page }}/{{ pager.pages }}</span>
     {% if pager.has_next %}<a class="btn" href="{{ page_url(pager.next_num) }}">Sau »</a>{% endif %}
   </div>
   {% endif %}
