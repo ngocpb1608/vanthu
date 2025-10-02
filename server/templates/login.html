@@ -7,7 +7,11 @@
       <input name="username" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"/>
     </label>
     <label>Mật khẩu
-      <input type="password" name="password" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"/>
+      <input id="pw" type="password" name="password" required style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px"/>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;color:#64748b">
+      <input type="checkbox" onclick="const p=document.getElementById('pw'); p.type=(p.type==='password'?'text':'password')">
+      Hiện mật khẩu
     </label>
     <div style="display:flex;gap:8px">
       <button class="btn brand" type="submit">Đăng nhập</button>
