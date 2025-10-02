@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- THỐNG KÊ NHANH (có màu) -->
-<div class="stats">
+<!-- HÀNG THỐNG KÊ: CHỈ 2 Ô -->
+<div class="stats" style="display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));">
   <div class="stat blue">
     <h4>NV chưa lấy — chi tiết</h4>
     <div class="num">{{ chua_lay|length }}</div>
@@ -11,13 +11,13 @@
       <table>
         <thead><tr><th>Mã</th><th>Loại</th><th>Tên KH</th><th>Địa chỉ</th><th>Nội dung</th><th>NV</th></tr></thead>
         <tbody>
-        {% for r in chua_lay[:10] %}
+        {% for r in chua_lay[:12] %}
           <tr>
             <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.id }}</a></td>
             <td>{{ r.loai_don_thu or '' }}</td>
             <td>{{ r.ten or '' }}</td>
             <td>{{ r.dia_chi or '' }}</td>
-            <td>{{ r.noi_dung or '' }}</td>
+            <td style="max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
             <td>{{ r.nhan_vien or '' }}</td>
           </tr>
         {% endfor %}
@@ -31,85 +31,97 @@
     <h4>Đang giải quyết</h4>
     <div class="num">{{ dang_giai_quyet|length }}</div>
   </div>
-
-  <div class="stat green">
-    <h4>Hoàn thành theo Loại (tháng gần nhất)</h4>
-    {% if latest_thang and latest_nam %}
-      <div class="pill" style="margin-top:6px">
-        Tháng {{ latest_thang }} / {{ latest_nam }}
-        {% if month_total %}
-          · Hoàn thành: <b>{{ month_completed }}</b> / Tổng: <b>{{ month_total }}</b>
-          {% if month_total > 0 %} ({{ ((month_completed / month_total) * 100) | round(1) }}%){% endif %}
-        {% endif %}
-      </div>
-    {% endif %}
-    <div class="list" style="margin-top:10px">
-      {% if hoan_thanh_by_loai %}
-        <table>
-          <thead><tr><th>Loại đơn thư</th><th>Số lượng</th></tr></thead>
-          <tbody>
-          {% for loai,cnt in hoan_thanh_by_loai %}
-            <tr><td>{{ loai }}</td><td>{{ cnt }}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <div style="padding:10px;color:#0f172a">Không có dữ liệu.</div>
-      {% endif %}
-    </div>
-  </div>
 </div>
 
 <!-- TÌM KIẾM -->
 <div class="card" style="margin-top:14px">
   <h3 style="margin:0 0 8px 0">Tìm kiếm công văn</h3>
   <form method="get" style="display:grid;gap:8px;grid-template-columns:repeat(6,minmax(0,1fr))">
-    <input name="ten" placeholder="Tên KH" value="{{ request.args.get('ten','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <input name="ma_kh" placeholder="Mã KH" value="{{ request.args.get('ma_kh','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <input name="dia_chi" placeholder="Địa chỉ" value="{{ request.args.get('dia_chi','') }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <select name="loai" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    <input name="ten" placeholder="Tên KH" value="{{ request.args.get('ten','') }}" class="ipt">
+    <input name="ma_kh" placeholder="Mã KH" value="{{ request.args.get('ma_kh','') }}" class="ipt">
+    <input name="dia_chi" placeholder="Địa chỉ" value="{{ request.args.get('dia_chi','') }}" class="ipt">
+    <select name="loai" class="ipt">
       <option value="">Loại đơn thư</option>
       {% for lo in loai_options %}
         <option value="{{ lo }}" {% if request.args.get('loai')==lo %}selected{% endif %}>{{ lo }}</option>
       {% endfor %}
       <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(không ghi)</option>
     </select>
-    <input name="thang" placeholder="Tháng" value={{ request.args.get('thang','')|tojson }} style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <input name="nam" placeholder="Năm" value={{ request.args.get('nam','')|tojson }} style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" style="grid-column:span 5;padding:8px;border:1px solid #e5e7eb;border-radius:8px">
-    <select name="tinh_trang" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    <input name="thang" placeholder="Tháng" value="{{ request.args.get('thang','') }}" class="ipt">
+    <input name="nam" placeholder="Năm" value="{{ request.args.get('nam','') }}" class="ipt">
+    <input name="q" placeholder="Từ khoá trong nội dung" value="{{ request.args.get('q','') }}" class="ipt" style="grid-column:span 5">
+    <select name="tinh_trang" class="ipt">
       <option value="">Tình trạng</option>
       {% for s in STATUS_CHOICES %}
         <option value="{{ s }}" {% if request.args.get('tinh_trang')==s %}selected{% endif %}>{{ s }}</option>
       {% endfor %}
     </select>
-    <div style="grid-column:span 6;display:flex;gap:8px;align-items:center">
+
+    <div style="grid-column:span 6;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn brand" type="submit">Tìm kiếm</button>
       <a class="btn" href="{{ url_for('dashboard') }}">Làm mới</a>
+    </div>
+  </form>
 
-      <!-- Nút xuất Excel chỉ hiện khi có loai + tinh_trang và có kết quả -->
-      {% if has_exportable %}
-      <form method="get" action="{{ url_for('export_excel') }}">
+  <!-- Nút xuất Excel theo bộ lọc (chỉ khi có Loại + Tình trạng + có kết quả) -->
+  <div style="margin-top:8px">
+    {% if has_exportable %}
+      <form method="get" action="{{ url_for('export_excel') }}" style="display:inline">
         {% for k,v in request.args.items() %}
           <input type="hidden" name="{{ k }}" value="{{ v }}">
         {% endfor %}
-        <button class="btn" type="submit">⬇️ Xuất Excel (theo bộ lọc)</button>
+        <button class="btn" type="submit">⬇️ Xuất Excel (lọc: Loại + Tình trạng)</button>
       </form>
-      {% else %}
-        <span class="pill" title="Chọn Loại + Tình trạng và có ≥1 kết quả để xuất">Xuất Excel: cần Loại + Tình trạng</span>
-      {% endif %}
-    </div>
-  </form>
+    {% else %}
+      <span class="pill">Muốn xuất theo bộ lọc: chọn <b>Loại đơn thư</b> và <b>Tình trạng</b>.</span>
+    {% endif %}
+  </div>
 </div>
 
-<!-- BẢNG DỮ LIỆU (scroll 60vh) -->
+<!-- HOÀN THÀNH THEO LOẠI (ĐƯA XUỐNG, HIỂN THỊ THOÁNG) -->
 <div class="card" style="margin-top:14px">
-  <h3 style="margin:0 0 8px 0">Bảng công văn</h3>
+  <h3 style="margin:0 0 8px 0">Hoàn thành theo Loại (tháng gần nhất)</h3>
+  {% if latest_thang and latest_nam %}
+    <div class="pill" style="margin:6px 0">
+      Tháng {{ latest_thang }}/{{ latest_nam }}
+      {% if month_total %}
+        · Hoàn thành <b>{{ month_completed }}</b> / Tổng <b>{{ month_total }}</b>
+        {% if month_total>0 %} ({{ ((month_completed/month_total)*100)|round(1) }}%){% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+    {% if hoan_thanh_by_loai %}
+      {% for loai,cnt in hoan_thanh_by_loai %}
+        <div class="pill" style="font-weight:600">{{ loai }}</div>
+        <div class="pill" style="text-align:right">{{ cnt }}</div>
+      {% endfor %}
+    {% else %}
+      <div>Không có dữ liệu.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- BẢNG CHI TIẾT + NÚT XUẤT EXCEL TOÀN BỘ -->
+<div class="card" style="margin-top:14px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+    <h3 style="margin:0">Bảng công văn</h3>
+    {% if pager and pager.total>0 %}
+    <form method="get" action="{{ url_for('export_table') }}" style="display:inline">
+      {% for k,v in request.args.items() %}
+        <input type="hidden" name="{{ k }}" value="{{ v }}">
+      {% endfor %}
+      <button class="btn" type="submit">⬇️ Xuất Excel (toàn bộ theo bộ lọc)</button>
+    </form>
+    {% endif %}
+  </div>
+
   <div style="overflow:auto; max-height:60vh; border:1px solid #e5e7eb; border-radius:12px">
-    <table>
-      <thead style="position:sticky; top:0; background:#fff">
+    <table id="main-table">
+      <thead style="position:sticky; top:0; background:#fff; z-index:1">
         <tr>
-          <th>STT</th><th>Tháng</th><th>Năm</th><th>Loại</th><th>Mã KH</th><th>Tên</th><th>Địa chỉ</th><th>Nội dung</th><th>Nhân viên</th><th>Ngày nhận</th><th>Tình trạng</th>
+          <th>STT</th><th>Tháng</th><th>Năm</th><th>Loại</th><th>Mã KH</th><th>Tên</th>
+          <th>Địa chỉ</th><th>Nội dung</th><th>Nhân viên</th><th>Ngày nhận</th><th>Tình trạng</th>
           {% if current_user.role == 'admin' %}<th>Hành động</th>{% endif %}
         </tr>
       </thead>
