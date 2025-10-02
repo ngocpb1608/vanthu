@@ -6,7 +6,7 @@
   <title>{{ APP_NAME }}</title>
   <style>
     :root{
-      --brand:#4f46e5;      /* Indigo mềm */
+      --brand:#4f46e5;      /* Indigo mềm đã duyệt */
       --brand-2:#06b6d4;    /* Cyan nhấn */
       --bg:#f7fafc;
       --card:#ffffff;
@@ -21,7 +21,8 @@
     a{color:var(--brand);text-decoration:none}
     .layout{max-width:1180px;margin:0 auto;padding:18px}
     .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .title{font-weight:800;font-size:20px;display:flex;gap:8px;align-items:center}
+    .brand{font-weight:800;font-size:20px;display:flex;gap:8px;align-items:center}
+    .brand a{color:var(--text)}
     .nav{display:flex;gap:8px;flex-wrap:wrap}
     .btn{padding:8px 12px;border:1px solid var(--ring);border-radius:10px;background:#fff;cursor:pointer}
     .btn:hover{border-color:var(--brand)}
@@ -48,7 +49,9 @@
 <body>
   <div class="layout">
     <div class="topbar">
-      <div class="title">📁 {{ APP_NAME }}</div>
+      <div class="brand">
+        📁 <a href="{{ url_for('dashboard') }}" title="Về trang chủ">Đơn thư đội 3</a>
+      </div>
       <div class="nav">
         {% if current_user.is_authenticated and current_user.role == 'admin' %}
           <a class="btn" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
