@@ -3,23 +3,44 @@
 <div class="card">
   <h3 style="margin-top:0">{{ 'Thêm công văn' if mode=='new' else 'Sửa công văn' }}</h3>
   <form method="post" style="display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))">
-    <input class="ipt" name="ma" placeholder="Mã (tùy chọn)" value="{{ r.ma if r else '' }}">
-    <input class="ipt" name="loai_don_thu" placeholder="Loại đơn thư" value="{{ r.loai_don_thu if r else '' }}">
-    <input class="ipt" name="thang" placeholder="Tháng" value="{{ default_thang }}">
-    <input class="ipt" name="nam" placeholder="Năm" value="{{ default_nam }}">
-    <input class="ipt" name="ma_kh" placeholder="Mã KH" value="{{ r.ma_kh if r else '' }}">
-    <input class="ipt" name="ten" placeholder="Tên KH" value="{{ r.ten if r else '' }}">
-    <input class="ipt" name="dia_chi" placeholder="Địa chỉ" value="{{ r.dia_chi if r else '' }}">
-    <input class="ipt" name="nhan_vien" placeholder="Nhân viên" value="{{ r.nhan_vien if r else '' }}">
-    <textarea class="ipt" name="noi_dung" placeholder="Nội dung" style="grid-column:span 2;height:120px">{{ r.noi_dung if r else '' }}</textarea>
-    <input class="ipt" type="date" name="ngay_nv_nhan" value="{{ r.ngay_nv_nhan if r and r.ngay_nv_nhan else '' }}">
-    <select class="ipt" name="tinh_trang">
-      {% set val = r.tinh_trang if r else '' %}
-      <option value="">Tình trạng</option>
-      <option value="NV chưa lấy đơn" {% if val=='NV chưa lấy đơn' %}selected{% endif %}>NV chưa lấy đơn</option>
-      <option value="Đang giải quyết" {% if val=='Đang giải quyết' %}selected{% endif %}>Đang giải quyết</option>
-      <option value="Hoàn Thành" {% if val=='Hoàn Thành' %}selected{% endif %}>Hoàn Thành</option>
-    </select>
+    <label>Mã công văn (tự sinh)
+      <input class="ipt" name="ma" value="{{ r.ma if r else preview_ma }}">
+    </label>
+    <label>Loại đơn thư
+      <input class="ipt" name="loai_don_thu" value="{{ r.loai_don_thu if r else '' }}">
+    </label>
+    <label>Tháng
+      <input class="ipt" name="thang" value="{{ default_thang }}">
+    </label>
+    <label>Năm
+      <input class="ipt" name="nam" value="{{ default_nam }}">
+    </label>
+    <label>Mã KH
+      <input class="ipt" name="ma_kh" value="{{ r.ma_kh if r else '' }}">
+    </label>
+    <label>Tên KH
+      <input class="ipt" name="ten" value="{{ r.ten if r else '' }}">
+    </label>
+    <label>Địa chỉ
+      <input class="ipt" name="dia_chi" value="{{ r.dia_chi if r else '' }}">
+    </label>
+    <label>Nhân viên
+      <input class="ipt" name="nhan_vien" value="{{ r.nhan_vien if r else '' }}">
+    </label>
+    <label style="grid-column:span 2">Nội dung
+      <textarea class="ipt" name="noi_dung" style="height:120px">{{ r.noi_dung if r else '' }}</textarea>
+    </label>
+    <label>Ngày NV nhận
+      <input class="ipt" type="date" name="ngay_nv_nhan" value="{{ r.ngay_nv_nhan if r and r.ngay_nv_nhan else '' }}">
+    </label>
+    <label>Tình trạng
+      <select class="ipt" name="tinh_trang">
+        {% set val = r.tinh_trang if r else '' %}
+        <option value="NV chưa lấy đơn" {% if val=='NV chưa lấy đơn' %}selected{% endif %}>NV chưa lấy đơn</option>
+        <option value="Đang giải quyết" {% if val=='Đang giải quyết' %}selected{% endif %}>Đang giải quyết</option>
+        <option value="Hoàn Thành" {% if val=='Hoàn Thành' %}selected{% endif %}>Hoàn Thành</option>
+      </select>
+    </label>
 
     <div style="grid-column:span 2;display:flex;gap:8px">
       <button class="btn brand" type="submit">{{ 'Lưu' if mode=='edit' else 'Thêm' }}</button>
