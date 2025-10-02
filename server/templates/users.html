@@ -1,15 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="card" style="margin-bottom:14px">
+  <h2 style="margin:0 0 12px 0">Tạo tài khoản</h2>
+  <form method="post" action="{{ url_for('users_create') }}" style="display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))">
+    <input name="username" placeholder="Tài khoản" required style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    <input name="password" placeholder="Mật khẩu" required style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+    <select name="role" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px">
+      <option value="staff">staff</option>
+      <option value="admin">admin</option>
+    </select>
+    <button class="btn brand" type="submit">Tạo</button>
+  </form>
+</div>
+
 <div class="card">
-  <h2 style="margin:0 0 12px 0">Người dùng</h2>
+  <h2 style="margin:0 0 12px 0">Danh sách người dùng</h2>
   <div style="overflow:auto">
     <table>
-      <thead><tr><th>ID</th><th>Tài khoản</th><th>Quyền</th></tr></thead>
+      <thead><tr><th>ID</th><th>Tài khoản</th><th>Quyền</th><th>Đổi mật khẩu</th><th>Xoá</th></tr></thead>
       <tbody>
         {% for u in users %}
-          <tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.role }}</td></tr>
+        <tr>
+          <td>{{ u.id }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.role }}</td>
+          <td>
+            <form method="post" action="{{ url_for('users_password', uid=u.id) }}" style="display:flex;gap:8px">
+              <input name="new_password" placeholder="Mật khẩu mới" required style="padding:6px;border:1px solid #e5e7eb;border-radius:8px">
+              <button class="btn" type="submit">Đổi</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('users_delete', uid=u.id) }}" onsubmit="return confirm('Xoá tài khoản {{ u.username }}?')">
+              <button class="btn" type="submit">Xoá</button>
+            </form>
+          </td>
+        </tr>
         {% else %}
-          <tr><td colspan="3" style="color:#64748b">Chưa có người dùng</td></tr>
+        <tr><td colspan="5" style="color:#64748b">Chưa có người dùng</td></tr>
         {% endfor %}
       </tbody>
     </table>
