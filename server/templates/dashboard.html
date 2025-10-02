@@ -1,25 +1,89 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- THẺ NHANH (CHỈ 2 THẺ) -->
+<!-- Tìm kiếm -->
+<div class="section"><span class="icon">🔎</span> Tìm kiếm công văn</div>
+<div class="card p-5 mb-6">
+  <form method="get" action="{{ url_for('dashboard') }}" class="space-y-3">
+    <div class="grid md:grid-cols-5 gap-3">
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">Tên KH</label>
+        <input class="input" name="ten" placeholder="Nhập tên..." value="{{ request.args.get('ten','') }}">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Mã KH</label>
+        <input class="input" name="ma_kh" placeholder="Nhập mã..." value="{{ request.args.get('ma_kh','') }}">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Tháng</label>
+        <input class="input" type="number" min="1" max="12" name="thang" value="{{ request.args.get('thang','') }}">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Năm</label>
+        <input class="input" type="number" name="nam" value="{{ request.args.get('nam','') }}">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-5 gap-3">
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">Địa chỉ</label>
+        <input class="input" name="dia_chi" value="{{ request.args.get('dia_chi','') }}">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">Loại đơn thư</label>
+        <select class="select" name="loai">
+          <option value="">— Tất cả —</option>
+          <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(Trống)</option>
+          {% for opt in loai_options %}
+            <option value="{{ opt }}" {% if request.args.get('loai')==opt %}selected{% endif %}>{{ opt }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Tình trạng</label>
+        <select class="select" name="tinh_trang">
+          <option value="">— Tất cả —</option>
+          {% for st in STATUS_CHOICES %}
+            <option value="{{ st }}" {% if request.args.get('tinh_trang')==st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-5 gap-3">
+      <div class="md:col-span-4">
+        <label class="block text-sm text-gray-600 mb-1">Từ khoá trong nội dung</label>
+        <input class="input" name="q" placeholder="vd: khiếu nại, cúp điện…" value="{{ request.args.get('q','') }}">
+      </div>
+      <div class="flex items-end gap-2">
+        <button class="btn btn-primary w-full" type="submit">🔎 Tìm kiếm</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Thống kê trạng thái (2 thẻ) -->
+<div class="section" style="background:#e8faf7"><span class="icon" style="background:#d1fae5;color:#065f46">📊</span> Thống kê theo tình trạng</div>
 <div class="grid md:grid-cols-2 gap-4 mb-6">
-  <div class="card p-4">
-    <div class="text-sm text-gray-500">Đang giải quyết</div>
-    <div class="text-2xl heading">{{ dang_giai_quyet|length }}</div>
+  <div class="stat stat-teal">
+    <div class="font-extrabold mb-1">NV chưa lấy</div>
+    <div class="text-sm text-gray-600">
+      {{ chua_lay|length }} hồ sơ
+    </div>
   </div>
-  <div class="card p-4">
-    <div class="text-sm text-gray-500">NV chưa lấy đơn</div>
-    <div class="text-2xl heading">{{ chua_lay|length }}</div>
+  <div class="stat stat-amber">
+    <div class="font-extrabold mb-1">Đang giải quyết</div>
+    <div class="text-sm text-gray-600">
+      {{ dang_giai_quyet|length }} hồ sơ
+    </div>
   </div>
 </div>
 
-<!-- HOÀN THÀNH THEO LOẠI (THÁNG GẦN NHẤT) -->
-<div class="card p-6 mb-6">
-  <div class="flex items-center justify-between mb-2">
-    <h2 class="text-lg heading">Hoàn thành theo Loại đơn thư</h2>
-    <div class="text-sm text-gray-600">
-      {% if latest_thang and latest_nam %}Tháng {{ '%02d'|format(latest_thang) }}/{{ latest_nam }}{% else %}Chưa có dữ liệu{% endif %}
-    </div>
+<!-- Hoàn thành theo loại đơn thư (tháng gần nhất) -->
+<div class="section"><span class="icon">🗂️</span> Hoàn thành theo Loại đơn thư</div>
+<div class="card p-5 mb-6">
+  <div class="mb-3 text-sm text-gray-600">
+    {% if latest_thang and latest_nam %} Tháng {{ '%02d'|format(latest_thang) }}/{{ latest_nam }} {% else %} Chưa có dữ liệu {% endif %}
   </div>
   <div class="overflow-x-auto rounded-lg border">
     <table class="min-w-full text-sm">
@@ -45,102 +109,26 @@
   </div>
 </div>
 
-<!-- BỘ LỌC TÌM KIẾM -->
-<div class="card p-6 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-lg heading">Tìm kiếm công văn</h2>
-    <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Làm mới</a>
-  </div>
-
-  <form method="get" action="{{ url_for('dashboard') }}" class="space-y-3">
-    <div class="grid md:grid-cols-4 gap-3">
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Mã</label>
-        <input class="input" name="ma" value="{{ request.args.get('ma','') }}" />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tên</label>
-        <input class="input" name="ten" value="{{ request.args.get('ten','') }}" />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Địa chỉ</label>
-        <input class="input" name="dia_chi" value="{{ request.args.get('dia_chi','') }}" />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Loại đơn thư</label>
-        <select class="select" name="loai">
-          <option value="">— Tất cả —</option>
-          <option value="__EMPTY__" {% if request.args.get('loai')=='__EMPTY__' %}selected{% endif %}>(Trống)</option>
-          {% for opt in loai_options %}
-            <option value="{{ opt }}" {% if request.args.get('loai')==opt %}selected{% endif %}>{{ opt }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-4 gap-3">
-      <div class="md:col-span-2">
-        <label class="block text-sm text-gray-600 mb-1">Từ khoá trong nội dung</label>
-        <input class="input" name="q" placeholder="vd: khiếu nại, cấp sổ..." value="{{ request.args.get('q','') }}" />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tháng</label>
-        <input class="input" name="thang" type="number" min="1" max="12" value="{{ request.args.get('thang','') }}" />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Năm</label>
-        <input class="input" name="nam" type="number" value="{{ request.args.get('nam','') }}" />
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-4 gap-3">
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">Tình trạng</label>
-        <select class="select" name="tinh_trang">
-          <option value="">— Tất cả —</option>
-          {% for st in STATUS_CHOICES %}
-            <option value="{{ st }}" {% if request.args.get('tinh_trang')==st %}selected{% endif %}>{{ st }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="md:col-span-3 flex items-end gap-2">
-        <button class="btn btn-primary" type="submit">Tìm kiếm</button>
-        <a class="btn btn-ghost"
-           href="{{ url_for('export_excel') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">
-          Xuất Excel
-        </a>
-      </div>
-    </div>
-  </form>
-
-  <div class="mt-4 flex flex-wrap gap-2 text-sm text-gray-600">
-    {% if request.args.get('ma') %}<span class="chip">Mã: {{ request.args.get('ma') }}</span>{% endif %}
-    {% if request.args.get('ten') %}<span class="chip">Tên: {{ request.args.get('ten') }}</span>{% endif %}
-    {% if request.args.get('dia_chi') %}<span class="chip">ĐC: {{ request.args.get('dia_chi') }}</span>{% endif %}
-    {% if request.args.get('loai') %}<span class="chip">Loại: {{ request.args.get('loai') }}</span>{% endif %}
-    {% if request.args.get('q') %}<span class="chip">Nội dung: {{ request.args.get('q') }}</span>{% endif %}
-    {% if request.args.get('thang') %}<span class="chip">Tháng: {{ request.args.get('thang') }}</span>{% endif %}
-    {% if request.args.get('nam') %}<span class="chip">Năm: {{ request.args.get('nam') }}</span>{% endif %}
-    {% if request.args.get('tinh_trang') %}<span class="chip">TT: {{ request.args.get('tinh_trang') }}</span>{% endif %}
-  </div>
-</div>
-
-<!-- DANH SÁCH -->
-<div class="card p-6">
+<!-- Bảng danh sách -->
+<div class="section" style="background:#fff6e6"><span class="icon" style="background:#ffedd5;color:#9a3412">📄</span> Bảng công văn</div>
+<div class="card p-5">
   <div class="overflow-x-auto rounded-lg border">
     <table class="min-w-full text-sm">
       <thead class="th">
         <tr>
           <th class="text-left px-3 py-2">Mã</th>
+          <th class="text-left px-3 py-2">Tháng</th>
+          <th class="text-left px-3 py-2">Năm</th>
           <th class="text-left px-3 py-2">Loại</th>
-          <th class="text-left px-3 py-2">Tháng/Năm</th>
           <th class="text-left px-3 py-2">Mã KH</th>
           <th class="text-left px-3 py-2">Tên</th>
           <th class="text-left px-3 py-2">Địa chỉ</th>
+          <th class="text-left px-3 py-2">Nội dung</th>
           <th class="text-left px-3 py-2">Nhân viên</th>
+          <th class="text-left px-3 py-2">Ngày nhận</th>
           <th class="text-left px-3 py-2">Tình trạng</th>
           {% if current_user.role == 'admin' %}
-            <th class="text-right px-3 py-2">Hành động</th>
+          <th class="text-right px-3 py-2">Hành động</th>
           {% endif %}
         </tr>
       </thead>
@@ -148,15 +136,28 @@
         {% for r in items %}
         <tr class="odd:bg-white even:bg-gray-50">
           <td class="px-3 py-2 font-semibold">
-            <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-[var(--primary)] hover:underline">{{ r.ma }}</a>
+            <a href="{{ url_for('congvan_detail', id=r.id) }}" class="text-[var(--pri)] hover:underline">{{ r.ma }}</a>
           </td>
+          <td class="px-3 py-2">{{ r.thang }}</td>
+          <td class="px-3 py-2">{{ r.nam }}</td>
           <td class="px-3 py-2">{{ r.loai_don_thu }}</td>
-          <td class="px-3 py-2">{{ r.thang or '' }}/{{ r.nam or '' }}</td>
           <td class="px-3 py-2">{{ r.ma_kh }}</td>
           <td class="px-3 py-2">{{ r.ten }}</td>
           <td class="px-3 py-2">{{ r.dia_chi }}</td>
+          <td class="px-3 py-2 truncate max-w-[16rem]" title="{{ r.noi_dung }}">{{ r.noi_dung }}</td>
           <td class="px-3 py-2">{{ r.nhan_vien }}</td>
-          <td class="px-3 py-2">{{ r.tinh_trang }}</td>
+          <td class="px-3 py-2">{{ r.ngay_nv_nhan.strftime('%d/%m/%Y') if r.ngay_nv_nhan }}</td>
+          <td class="px-3 py-2">
+            {% if r.tinh_trang == 'NV chưa lấy đơn' %}
+              <span class="chip chip-amber">NV chưa lấy</span>
+            {% elif r.tinh_trang == 'Đang giải quyết' %}
+              <span class="chip chip-blue">Đang giải quyết</span>
+            {% elif r.tinh_trang == 'PKD trả về NV' %}
+              <span class="chip chip-rose">PKD trả về</span>
+            {% else %}
+              <span class="chip chip-teal">Hoàn thành</span>
+            {% endif %}
+          </td>
           {% if current_user.role == 'admin' %}
           <td class="px-3 py-2">
             <div class="flex justify-end gap-2">
@@ -169,25 +170,20 @@
           {% endif %}
         </tr>
         {% else %}
-        <tr><td class="px-3 py-2" colspan="{{ 9 if current_user.role == 'admin' else 8 }}">Không có dữ liệu.</td></tr>
+        <tr><td class="px-3 py-2" colspan="{{ 12 if current_user.role == 'admin' else 11 }}">Không có dữ liệu.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
   {% if pager.pages > 1 %}
-    <div class="mt-4 flex items-center justify-between text-sm">
-      <div>Trang {{ pager.page }} / {{ pager.pages }} · {{ pager.total }} bản ghi</div>
-      <div class="flex gap-2">
-        {% if pager.has_prev %}
-          <a class="btn btn-ghost" href="{{ page_url(pager.prev_num) }}">« Trước</a>
-        {% endif %}
-        {% if pager.has_next %}
-          <a class="btn btn-ghost" href="{{ page_url(pager.next_num) }}">Sau »</a>
-        {% endif %}
-      </div>
+  <div class="mt-4 flex items-center justify-between text-sm">
+    <div>Trang {{ pager.page }} / {{ pager.pages }} · {{ pager.total }} bản ghi</div>
+    <div class="flex gap-2">
+      {% if pager.has_prev %}<a class="btn btn-ghost" href="{{ page_url(pager.prev_num) }}">« Trước</a>{% endif %}
+      {% if pager.has_next %}<a class="btn btn-ghost" href="{{ page_url(pager.next_num) }}">Sau »</a>{% endif %}
     </div>
+  </div>
   {% endif %}
 </div>
-
 {% endblock %}
