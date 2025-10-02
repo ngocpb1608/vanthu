@@ -2,7 +2,6 @@
 {% block content %}
 
 <style>
-  /* Cho phép mở rộng danh sách trong ô thống kê */
   .list.open{ max-height:70vh !important; }
   .card-tools{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
 </style>
@@ -12,7 +11,7 @@
   <h3 class="heading">Thống kê</h3>
 
   <div class="stats">
-    <!-- NV CHƯA LẤY — CHI TIẾT + TOOLS -->
+    <!-- NV CHƯA LẤY — CHI TIẾT -->
     <div class="stat-card stat-blue">
       <div class="stat-title">NV chưa lấy — chi tiết</div>
       <div class="num">{{ chua_lay|length }}</div>
@@ -30,11 +29,7 @@
             {% for r in chua_lay %}
             <tr>
               <td style="white-space:nowrap">
-                {% if current_user.role == 'admin' %}
-                  <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
-                {% else %}
-                  {{ r.ma_kh or ('#' ~ r.id) }}
-                {% endif %}
+                <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
               </td>
               <td>{{ r.loai_don_thu or '' }}</td>
               <td>{{ r.ten or '' }}</td>
@@ -53,9 +48,7 @@
             Xem tất cả ({{ chua_lay|length }})
           </button>
         {% endif %}
-        <!-- Lọc trang chỉ nhóm 'NV chưa lấy' -->
         <a class="btn small" href="{{ url_for('dashboard', tinh_trang='NV chưa lấy đơn') }}">Lọc nhóm này</a>
-        <!-- Xuất Excel chỉ nhóm 'NV chưa lấy' -->
         <form method="get" action="{{ url_for('export_table') }}">
           <input type="hidden" name="tinh_trang" value="NV chưa lấy đơn">
           <button class="btn small" type="submit">⬇️ Xuất Excel nhóm này</button>
@@ -64,7 +57,7 @@
       {% endif %}
     </div>
 
-    <!-- ĐANG GIẢI QUYẾT — CHI TIẾT + TOOLS -->
+    <!-- ĐANG GIẢI QUYẾT — CHI TIẾT -->
     <div class="stat-card stat-amber">
       <div class="stat-title">Đang giải quyết — chi tiết</div>
       <div class="num">{{ dang_giai_quyet|length }}</div>
@@ -82,11 +75,7 @@
             {% for r in dang_giai_quyet %}
             <tr>
               <td style="white-space:nowrap">
-                {% if current_user.role == 'admin' %}
-                  <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
-                {% else %}
-                  {{ r.ma_kh or ('#' ~ r.id) }}
-                {% endif %}
+                <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
               </td>
               <td>{{ r.loai_don_thu or '' }}</td>
               <td>{{ r.ten or '' }}</td>
@@ -105,9 +94,7 @@
             Xem tất cả ({{ dang_giai_quyet|length }})
           </button>
         {% endif %}
-        <!-- Lọc trang chỉ nhóm 'Đang giải quyết' -->
         <a class="btn small" href="{{ url_for('dashboard', tinh_trang='Đang giải quyết') }}">Lọc nhóm này</a>
-        <!-- Xuất Excel chỉ nhóm 'Đang giải quyết' -->
         <form method="get" action="{{ url_for('export_table') }}">
           <input type="hidden" name="tinh_trang" value="Đang giải quyết">
           <button class="btn small" type="submit">⬇️ Xuất Excel nhóm này</button>
@@ -175,7 +162,7 @@
     </div>
   </form>
 
-  <!-- Form GET RIÊNG để Xuất Excel theo kết quả tìm kiếm (không lồng trong form tìm kiếm) -->
+  <!-- Form GET RIÊNG để Xuất Excel theo kết quả tìm kiếm -->
   <form method="get" action="{{ url_for('export_table') }}" style="margin-top:8px">
     {% for k,v in request.args.items() %}
       <input type="hidden" name="{{ k }}" value="{{ v }}">
@@ -184,7 +171,7 @@
   </form>
 </div>
 
-<!-- ===== BẢNG CHI TIẾT (admin) ===== -->
+<!-- ===== BẢNG CHI TIẾT (chỉ admin) ===== -->
 {% if current_user.role == 'admin' %}
 <div class="card" style="margin-top:14px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
