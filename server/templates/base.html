@@ -3,59 +3,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ APP_NAME }}</title>
+  <title>Quản lý đơn thư - Đội 3</title>
   <style>
     :root{
-      --brand:#6c8ef5; --brand-2:#5bd5e5;
-      --bg:#f7fafc; --card:#ffffff; --text:#0f172a; --ring:#e5e7eb; --muted:#667085;
-      --blue-bg:#e0f2fe; --blue-bd:#bae6fd; --blue-tx:#075985;
-      --amber-bg:#fef9c3; --amber-bd:#fde68a; --amber-tx:#92400e;
-      --green-bg:#dcfce7; --green-bd:#bbf7d0; --green-tx:#065f46;
-      --rose-bg:#ffe4e6; --rose-bd:#fecdd3; --rose-tx:#9f1239;
+      --bg:#f6f8fb; --card:#ffffff; --ring:#e6ebf3;
+      --brand:#5b8def; --brand-600:#3d6fe0;
+      --text:#2a2f3a; --muted:#6b7280;
+      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --blue:#e7f2ff; --amber:#fff5e6;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);
-      font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    a{color:var(--brand);text-decoration:none}
-    .layout{max-width:1180px;margin:0 auto;padding:18px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-    .brand{font-weight:800;font-size:21px;display:flex;gap:8px;align-items:center}
-    .brand a{color:var(--text)}
-    .nav{display:flex;gap:8px;flex-wrap:wrap}
-    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:14px}
-    .btn{padding:8px 12px;border:1px solid var(--ring);border-radius:10px;background:#fff;cursor:pointer}
-    .btn:hover{border-color:var(--brand)}
-    .btn.brand{background:linear-gradient(90deg,var(--brand),var(--brand-2));color:#fff;border:none}
-    .btn.small{padding:6px 10px;font-size:12px}
-    .heading{font-weight:800;margin:0 0 10px 0}
-    .stats{display:grid;gap:12px}
-    @media(min-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    .stat-card{border:1px solid var(--ring);border-radius:14px;padding:12px}
-    .stat-title{font-weight:700;margin:0 0 6px 0}
-    .num{font-weight:800;font-size:22px;margin:2px 0 8px}
-    .stat-blue{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-tx)}
-    .stat-amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber-tx)}
-    table{border-collapse:collapse;width:100%}
-    th,td{padding:10px;border-bottom:1px solid var(--ring);vertical-align:top}
-    thead th{font-weight:700;background:#fff;position:sticky;top:0;z-index:1}
-    .chip{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--ring);background:#f8fafc}
-    .chip.ok{background:var(--green-bg);border-color:var(--green-bd);color:var(--green-tx)}
-    .chip.warn{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber-tx)}
-    .chip.err{background:var(--rose-bg);border-color:var(--rose-bd);color:var(--rose-tx)}
-    .ipt{padding:9px 10px;border:1px solid var(--ring);border-radius:10px;background:#fff;width:100%}
-    .row{display:grid;gap:8px}
-    @media(min-width:900px){.row.cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}}
-    .list{overflow:auto;max-height:180px;border:1px solid var(--ring);border-radius:10px;background:#fff}
-    .msg{margin:8px 0}.msg.ok{color:var(--green-tx)}.msg.error{color:var(--rose-tx)}
+    html,body{background:var(--bg); color:var(--text); font:14px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial;}
+    a{color:var(--brand); text-decoration:none}
+    .wrap{max-width:1180px; margin:auto; padding:16px}
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px}
+    .brand-title{font-weight:800; font-size:22px}
+    .btn{border:1px solid var(--ring); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer}
+    .btn:hover{border-color:#d7ddea}
+    .btn.brand{background:var(--brand); color:#fff; border-color:transparent}
+    .btn.brand:hover{background:var(--brand-600)}
+    .btn.small{padding:6px 10px; font-size:12px}
+    .card{background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:14px}
+    .heading{font-size:16px; font-weight:700; margin:0 0 10px}
+    .row{display:grid; gap:8px}
+    .row.cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .ipt{width:100%; border:1px solid var(--ring); padding:9px 10px; border-radius:10px; background:#fff}
+    table{width:100%; border-collapse:separate; border-spacing:0}
+    th,td{padding:10px 12px; border-bottom:1px solid var(--ring); vertical-align:top}
+    th{font-weight:700; text-align:left}
+    .chip{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--ring); border-radius:999px; padding:6px 10px; background:#fff}
+    .muted{color:var(--muted)}
+    .stat-card{border:1px solid var(--ring); border-radius:14px; padding:12px}
+    .stat-blue{background:var(--blue)}
+    .stat-amber{background:var(--amber)}
+    .stat-title{font-weight:700; margin-bottom:6px}
+    .num{font-weight:800; font-size:20px; margin-bottom:8px}
+    .list{overflow:auto; max-height:280px; border-radius:12px; background:#fff; border:1px solid var(--ring)}
+    .ok{background:#eafcf1}
+    .warn{background:#fff6e6}
   </style>
 </head>
 <body>
-  <div class="layout">
+  <div class="wrap">
     <div class="topbar">
-      <div class="brand">📁 <a href="{{ url_for('dashboard') }}" title="Về trang chủ">Đơn thư đội 3</a></div>
-      <div class="nav">
+      <div>
+        <a class="brand-title" href="{{ url_for('dashboard') }}">📁 Quản lý công văn - Đội 3</a>
+        <div class="muted" style="font-size:12px">Designed by Mun</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
         {% if current_user.is_authenticated and current_user.role == 'admin' %}
-          <a class="btn" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+          <a class="btn brand" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
           <a class="btn" href="{{ url_for('users') }}">Người dùng</a>
         {% endif %}
         {% if current_user.is_authenticated %}
@@ -64,23 +60,17 @@
       </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for c, m in messages %}<div class="msg {{ c }}">{{ m }}</div>{% endfor %}
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        <div style="margin-bottom:10px">
+          {% for cat,msg in msgs %}
+            <div class="card" style="border-color: {% if cat=='ok' %}#bbf7d0{% else %}#fecaca{% endif %}; background: {% if cat=='ok' %}#ecfdf5{% else %}#fff1f2{% endif %};">{{ msg }}</div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
     {% block content %}{% endblock %}
   </div>
-
-  <!-- DataTables mini (tuỳ chọn) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-datatables@latest/dist/vanilla-dataTables.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/vanilla-datatables@latest/dist/vanilla-dataTables.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const t = document.querySelector('#main-table');
-      if (t) new DataTable(t, {searchable:true, fixedHeight:true, perPage:20});
-    });
-  </script>
 </body>
 </html>
