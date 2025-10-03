@@ -1,6 +1,8 @@
 import os
 from io import BytesIO
 from datetime import datetime
+import secrets
+from string import ascii_letters, digits
 
 from flask import (
     Flask, render_template, request, redirect,
@@ -14,7 +16,7 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import or_, func
 
-# ============ App & DB ============
+# ========= App & DB =========
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
 
@@ -26,17 +28,16 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# ============ Login ============
+# ========= Auth =========
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
-# ============ HẰNG ============
+# ========= Constants =========
+APP_NAME = "Quản lý đơn thư đội 3"
 STATUS_CHOICES = ["NV chưa lấy đơn", "Đang giải quyết", "Hoàn Thành"]
 CHUA_LAY, DANG_GQ, HOAN_T = STATUS_CHOICES
 
-APP_NAME = "Quản lý đơn thư - Đội 3"
-
-# ============ Models ============
+# ========= Models =========
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -55,7 +56,7 @@ class CongVan(db.Model):
     dia_chi = db.Column(db.String(255))
     nhan_vien = db.Column(db.String(64))
     noi_dung = db.Column(db.Text)
-    ngay_nv_nhan = db.Column(db.String(20))  # YYYY-MM-DD
+    ngay_nv_nhan = db.Column(db.String(20))  # YYYY-MM-DD (giữ chuỗi)
     tinh_trang = db.Column(db.String(120))
     ghi_chu = db.Column(db.Text)
     ket_qua = db.Column(db.String(120))
@@ -63,7 +64,7 @@ class CongVan(db.Model):
 @login_manager.user_loader
 def load_user(uid): return User.query.get(int(uid))
 
-# Khởi tạo DB + tài khoản mặc định
+# Seed DB & users
 with app.app_context():
     db.create_all()
     if User.query.count() == 0:
@@ -73,7 +74,7 @@ with app.app_context():
         s.set_password(os.getenv("DEFAULT_STAFF_PASSWORD","nhanvien123"))
         db.session.add_all([a, s]); db.session.commit()
 
-# ============ Helpers ============
+# ========= Helpers =========
 def admin_required():
     if not current_user.is_authenticated or current_user.role != "admin":
         abort(403)
@@ -98,9 +99,13 @@ def apply_filters(q):
         q = q.filter(CongVan.loai_don_thu == loai)
     if thang:      q = q.filter(CongVan.thang == int(thang))
     if nam:        q = q.filter(CongVan.nam == int(nam))
-    if tinh_trang: q = q.filter(CongVan.tinh_trang == tinh_trang)  # so sánh BẰNG
+    if tinh_trang: q = q.filter(CongVan.tinh_trang == tinh_trang)  # so sánh bằng
     if keyword:    q = q.filter(CongVan.noi_dung.ilike(f"%{keyword}%"))
     return q
+
+def _gen_temp_password(n=10):
+    alphabet = ascii_letters + digits
+    return "".join(secrets.choice(alphabet) for _ in range(n))
 
 @app.context_processor
 def _ctx():
@@ -108,9 +113,10 @@ def _ctx():
         args = request.args.to_dict(flat=True); args["page"] = p
         return url_for("dashboard", **args)
     loai_options = [r[0] for r in db.session.query(CongVan.loai_don_thu).distinct().all() if r[0]]
-    return dict(page_url=page_url, STATUS_CHOICES=STATUS_CHOICES, loai_options=loai_options, APP_NAME=APP_NAME)
+    return dict(page_url=page_url, STATUS_CHOICES=STATUS_CHOICES,
+                loai_options=loai_options, APP_NAME=APP_NAME)
 
-# ============ Auth ============
+# ========= Auth routes =========
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -134,21 +140,19 @@ def logout():
 def healthz():
     return "ok", 200
 
-# ============ Dashboard & Stats ============
+# ========= Dashboard & Stats =========
 @app.get("/")
 @login_required
 def dashboard():
     all_rows = CongVan.query.order_by(CongVan.id.desc()).all()
-
     chua_lay = [r for r in all_rows if (r.tinh_trang or "") == CHUA_LAY]
     dang_giai_quyet = [r for r in all_rows if (r.tinh_trang or "") == DANG_GQ]
-    # hoàn thành theo tháng gần nhất
-    completed = [r for r in all_rows if (r.tinh_trang or "") == HOAN_T and r.thang and r.nam]
 
+    # Hoàn thành theo loại – tháng gần nhất
+    completed = [r for r in all_rows if (r.tinh_trang or "") == HOAN_T and r.thang and r.nam]
     latest_thang = latest_nam = None
     hoan_thanh_by_loai = []
     month_total = month_completed = 0
-
     if completed:
         latest_nam, latest_thang = max(((r.nam, r.thang) for r in completed))
         month_rows = [r for r in all_rows if r.nam==latest_nam and r.thang==latest_thang]
@@ -158,25 +162,24 @@ def dashboard():
         for r in month_rows:
             if (r.tinh_trang or "") == HOAN_T:
                 key = (r.loai_don_thu or "(không ghi)")
-                counter[key] = counter.get(key,0)+1
+                counter[key] = counter.get(key, 0) + 1
         hoan_thanh_by_loai = sorted(counter.items(), key=lambda x: x[0])
 
-    # Bảng chi tiết (admin mới thấy)
+    # Bảng chi tiết (chỉ admin thấy)
     q = apply_filters(CongVan.query.order_by(CongVan.id.desc()))
     page = int(request.args.get("page", 1)); per_page = 20
     pager = q.paginate(page=page, per_page=per_page, error_out=False)
     items = pager.items
 
     return render_template("dashboard.html",
-        chua_lay=chua_lay,
-        dang_giai_quyet=dang_giai_quyet,
+        chua_lay=chua_lay, dang_giai_quyet=dang_giai_quyet,
         latest_thang=latest_thang, latest_nam=latest_nam,
         hoan_thanh_by_loai=hoan_thanh_by_loai,
         month_total=month_total, month_completed=month_completed,
         items=items, pager=pager
     )
 
-# ============ CRUD Công văn ============
+# ========= CRUD Công văn =========
 @app.route("/congvan/new", methods=["GET","POST"])
 @login_required
 def congvan_new():
@@ -234,20 +237,65 @@ def congvan_delete(id):
     flash("Đã xoá công văn","ok")
     return redirect(url_for("dashboard"))
 
-# Staff cũng được xem chi tiết
+# Staff cũng xem chi tiết
 @app.get("/congvan/<int:id>")
 @login_required
 def congvan_detail(id):
     r = CongVan.query.get_or_404(id)
     return render_template("congvan_detail.html", r=r)
 
-# ============ Export Excel ============
+# ========= Users (admin) =========
+@app.get("/users")
+@login_required
+def users():
+    admin_required()
+    users = User.query.order_by(User.id.asc()).all()
+    return render_template("users.html", users=users)
+
+@app.post("/users")
+@login_required
+def users_create():
+    admin_required()
+    username = request.form.get("username","").strip()
+    password = request.form.get("password","").strip()
+    role = request.form.get("role","staff")
+    if not username or not password:
+        flash("Thiếu username/password","error"); return redirect(url_for("users"))
+    if User.query.filter_by(username=username).first():
+        flash("Username đã tồn tại","error"); return redirect(url_for("users"))
+    u = User(username=username, role=role); u.set_password(password)
+    db.session.add(u); db.session.commit()
+    flash(f"Đã tạo tài khoản {username} ({role})","ok")
+    return redirect(url_for("users"))
+
+@app.post("/users/<int:uid>/reset_password")
+@login_required
+def reset_password(uid):
+    admin_required()
+    u = User.query.get_or_404(uid)
+    new_pw = _gen_temp_password()
+    u.set_password(new_pw)
+    db.session.commit()
+    flash(f"Đã đặt lại mật khẩu cho '{u.username}'. Mật khẩu mới: {new_pw}", "ok")
+    return redirect(url_for("users"))
+
+@app.post("/users/<int:uid>/delete")
+@login_required
+def users_delete(uid):
+    admin_required()
+    if current_user.id == uid:
+        flash("Không thể xoá chính mình","error"); return redirect(url_for("users"))
+    u = User.query.get_or_404(uid)
+    db.session.delete(u); db.session.commit()
+    flash("Đã xoá tài khoản","ok")
+    return redirect(url_for("users"))
+
+# ========= Export Excel =========
 @app.get("/export")
 @login_required
 def export_table():
     q = apply_filters(CongVan.query.order_by(CongVan.id.desc()))
     rows = q.all()
-
     from openpyxl import Workbook
     wb = Workbook(); ws = wb.active; ws.title = "CongVan"
     headers = ["STT","Tháng","Năm","Loại","Mã KH","Tên","Địa chỉ","Nội dung",
@@ -256,8 +304,8 @@ def export_table():
     for r in rows:
         ws.append([
             r.id, r.thang, r.nam, r.loai_don_thu, r.ma_kh, r.ten, r.dia_chi,
-            (r.noi_dung or "")[:32760],
-            r.nhan_vien, r.ngay_nv_nhan, r.tinh_trang, r.ket_qua, r.ghi_chu
+            (r.noi_dung or "")[:32760], r.nhan_vien, r.ngay_nv_nhan,
+            r.tinh_trang, r.ket_qua, r.ghi_chu
         ])
     bio = BytesIO(); wb.save(bio); bio.seek(0)
     filename = f"congvan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
@@ -265,13 +313,11 @@ def export_table():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True, download_name=filename)
 
-# ============ Error pages ============
+# ========= Error pages =========
 @app.errorhandler(404)
 def _404(e): return render_template("error.html", code=404, msg="Không tìm thấy trang"), 404
-
 @app.errorhandler(403)
 def _403(e): return render_template("error.html", code=403, msg="Không có quyền truy cập"), 403
-
 @app.errorhandler(500)
 def _500(e): return render_template("error.html", code=500, msg="Lỗi máy chủ"), 500
 
