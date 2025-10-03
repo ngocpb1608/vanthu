@@ -300,6 +300,28 @@ def _ctx():
         return url_for("dashboard", **args)
     return dict(page_url=page_url, APP_NAME="Đơn thư đội 3", STATUS_CHOICES=STATUS_CHOICES)
 
+# ========= QUẢN LÝ NGƯỜI DÙNG (ADMIN) =========
+@app.route("/users")
+@login_required
+def users():
+    admin_required()
+    all_users = User.query.order_by(User.username.asc()).all()
+    return render_template("users.html", users=all_users)
+
+@app.route("/users/<int:uid>/reset", methods=["POST"])
+@login_required
+def user_reset(uid):
+    admin_required()
+    u = User.query.get_or_404(uid)
+    new_pass = request.form.get("new_password", "").strip()
+    if not new_pass:
+        flash("Vui lòng nhập mật khẩu mới", "error")
+        return redirect(url_for("users"))
+    u.set_password(new_pass); db.session.commit()
+    flash(f"Đã đổi mật khẩu cho {u.username}", "ok")
+    return redirect(url_for("users"))
+
+
 # --- Health check cho Render ---
 @app.get("/healthz")
 def healthz():
