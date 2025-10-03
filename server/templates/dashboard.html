@@ -1,143 +1,93 @@
 {% extends "base.html" %}
 {% block content %}
 
-<style>
-  /* mở rộng danh sách trong ô thống kê khi bấm */
-  .list.open{ max-height:70vh !important; }
-  .card-tools{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
-  /* stack 1 cột cho 2 ô thống kê */
-  .stats-onecol{ display:grid; gap:12px; grid-template-columns:1fr; }
-</style>
-
-<!-- ===== THỐNG KÊ ===== -->
+<!-- ===== THỐNG KÊ (xếp dọc: NV chưa lấy -> Đang giải quyết) ===== -->
 <div class="card" style="margin-bottom:14px">
   <h3 class="heading">Thống kê</h3>
 
-  <!-- Đặt 2 ô theo thứ tự: NV chưa lấy (trên) -> Đang giải quyết (dưới) -->
-  <div class="stats-onecol">
-    <!-- NV CHƯA LẤY — CHI TIẾT -->
-    <div class="stat-card stat-blue">
-      <div class="stat-title">NV chưa lấy — chi tiết</div>
-      <div class="num">{{ chua_lay|length }}</div>
-
-      {% if chua_lay %}
-      <div id="list-chualay" class="list">
-        <table>
-          <thead>
-            <tr>
-              <th style="white-space:nowrap">Mã KH</th>
-              <th>Loại</th><th>Tên</th><th>Địa chỉ</th><th>Nội dung</th><th>NV</th>
-            </tr>
-          </thead>
-          <tbody>
+  <!-- NV CHƯA LẤY -->
+  <div class="stat-card stat-blue" style="margin-bottom:12px">
+    <div class="stat-title">NV chưa lấy — chi tiết ({{ chua_lay|length }} hồ sơ)</div>
+    <div class="list">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã KH</th><th>Loại</th><th>Tên KH</th><th>Địa chỉ</th><th>Nội dung</th><th>Nhân viên</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if chua_lay %}
             {% for r in chua_lay %}
-            <tr>
-              <td style="white-space:nowrap">
-                <!-- staff cũng được xem chi tiết -->
-                <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
-              </td>
-              <td>{{ r.loai_don_thu or '' }}</td>
-              <td>{{ r.ten or '' }}</td>
-              <td>{{ r.dia_chi or '' }}</td>
-              <td style="max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
-              <td>{{ r.nhan_vien or '' }}</td>
-            </tr>
+              <tr>
+                <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a></td>
+                <td>{{ r.loai_don_thu or '' }}</td>
+                <td>{{ r.ten or '' }}</td>
+                <td>{{ r.dia_chi or '' }}</td>
+                <td>{{ (r.noi_dung or '')[:120] }}</td>
+                <td>{{ r.nhan_vien or '' }}</td>
+              </tr>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card-tools">
-        {% if chua_lay|length > 12 %}
-          <button class="btn small" type="button"
-                  onclick="toggleList('list-chualay', this)"
-                  data-label="Xem tất cả ({{ chua_lay|length }})">
-            Xem tất cả ({{ chua_lay|length }})
-          </button>
-        {% endif %}
-        <!-- Lọc & Export nhóm này -->
-        <a class="btn small" href="{{ url_for('dashboard', tinh_trang='NV chưa lấy đơn') }}">Lọc nhóm này</a>
-        <form method="get" action="{{ url_for('export_table') }}">
-          <input type="hidden" name="tinh_trang" value="NV chưa lấy đơn">
-          <button class="btn small" type="submit">⬇️ Xuất Excel nhóm này</button>
-        </form>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- ĐANG GIẢI QUYẾT — CHI TIẾT (ĐẶT Ở DƯỚI) -->
-    <div class="stat-card stat-amber">
-      <div class="stat-title">Đang giải quyết — chi tiết</div>
-      <div class="num">{{ dang_giai_quyet|length }}</div>
-
-      {% if dang_giai_quyet %}
-      <div id="list-danggq" class="list">
-        <table>
-          <thead>
-            <tr>
-              <th style="white-space:nowrap">Mã KH</th>
-              <th>Loại</th><th>Tên</th><th>Địa chỉ</th><th>Nội dung</th><th>NV</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in dang_giai_quyet %}
-            <tr>
-              <td style="white-space:nowrap">
-                <a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a>
-              </td>
-              <td>{{ r.loai_don_thu or '' }}</td>
-              <td>{{ r.ten or '' }}</td>
-              <td>{{ r.dia_chi or '' }}</td>
-              <td style="max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.noi_dung or '' }}</td>
-              <td>{{ r.nhan_vien or '' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="card-tools">
-        {% if dang_giai_quyet|length > 12 %}
-          <button class="btn small" type="button"
-                  onclick="toggleList('list-danggq', this)"
-                  data-label="Xem tất cả ({{ dang_giai_quyet|length }})">
-            Xem tất cả ({{ dang_giai_quyet|length }})
-          </button>
-        {% endif %}
-        <a class="btn small" href="{{ url_for('dashboard', tinh_trang='Đang giải quyết') }}">Lọc nhóm này</a>
-        <form method="get" action="{{ url_for('export_table') }}">
-          <input type="hidden" name="tinh_trang" value="Đang giải quyết">
-          <button class="btn small" type="submit">⬇️ Xuất Excel nhóm này</button>
-        </form>
-      </div>
-      {% endif %}
+          {% else %}
+            <tr><td colspan="6" class="muted">Không có dữ liệu.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Hoàn thành theo loại -->
+  <!-- ĐANG GIẢI QUYẾT -->
+  <div class="stat-card stat-amber">
+    <div class="stat-title">Đang giải quyết — chi tiết ({{ dang_giai_quyet|length }} hồ sơ)</div>
+    <div class="list">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã KH</th><th>Loại</th><th>Tên KH</th><th>Địa chỉ</th><th>Nội dung</th><th>Nhân viên</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if dang_giai_quyet %}
+            {% for r in dang_giai_quyet %}
+              <tr>
+                <td><a href="{{ url_for('congvan_detail', id=r.id) }}">{{ r.ma_kh or ('#' ~ r.id) }}</a></td>
+                <td>{{ r.loai_don_thu or '' }}</td>
+                <td>{{ r.ten or '' }}</td>
+                <td>{{ r.dia_chi or '' }}</td>
+                <td>{{ (r.noi_dung or '')[:120] }}</td>
+                <td>{{ r.nhan_vien or '' }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6" class="muted">Không có dữ liệu.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Hoàn thành theo loại (tháng gần nhất) -->
   <div class="card" style="margin-top:12px;background:#fafcff">
-    <div class="stat-title" style="margin-bottom:6px">Hoàn thành theo Loại (tháng gần nhất)</div>
-    {% if latest_thang and latest_nam %}
-      <div class="chip" style="margin:6px 0">
-        Tháng {{ latest_thang }}/{{ latest_nam }}
-        {% if month_total %}
-          · Hoàn thành <b>{{ month_completed }}</b> / Tổng <b>{{ month_total }}</b>
-          {% if month_total>0 %} ({{ ((month_completed/month_total)*100)|round(1) }}%){% endif %}
-        {% endif %}
-      </div>
-    {% endif %}
-    <div style="display:grid;gap:8px">
-      {% if hoan_thanh_by_loai %}
-        {% for loai,cnt in hoan_thanh_by_loai %}
-          <div class="chip" style="display:flex;justify-content:space-between;gap:12px">
-            <span><b>{{ loai or 'Không rõ' }}</b> — số lượng:</span>
-            <span><b>{{ cnt }}</b></span>
-          </div>
-        {% endfor %}
+    <div class="stat-title">
+      Hoàn thành theo Loại đơn thư —
+      {% if latest_thang and latest_nam %}
+        Tháng {{ "%02d"|format(latest_thang) }}/{{ latest_nam }}
+        <span class="chip" style="margin-left:8px">{{ month_completed }}/{{ month_total }} đã hoàn thành</span>
       {% else %}
-        <div class="muted">Không có dữ liệu.</div>
+        <span class="muted">Chưa có dữ liệu</span>
       {% endif %}
     </div>
+    <table>
+      <thead><tr><th>Loại đơn thư</th><th>Số lượng</th></tr></thead>
+      <tbody>
+        {% if hoan_thanh_by_loai %}
+          {% for loai, cnt in hoan_thanh_by_loai %}
+            <tr><td>{{ loai }}</td><td>{{ cnt }}</td></tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="2" class="muted">Không có dữ liệu.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
   </div>
 </div>
 
@@ -172,7 +122,7 @@
     </div>
   </form>
 
-  <!-- Form GET RIÊNG để Xuất Excel theo kết quả tìm kiếm -->
+  <!-- Xuất Excel đúng theo kết quả hiện tại -->
   <form method="get" action="{{ url_for('export_table') }}" style="margin-top:8px">
     {% for k,v in request.args.items() %}
       <input type="hidden" name="{{ k }}" value="{{ v }}">
@@ -216,10 +166,7 @@
           <td>{{ r.noi_dung or '' }}</td>
           <td>{{ r.nhan_vien or '' }}</td>
           <td>{{ r.ngay_nv_nhan or '' }}</td>
-          <td>
-            {% set t = (r.tinh_trang or '') %}
-            <span class="chip {% if 'Hoàn' in t or 'hoan' in t %}ok{% elif 'Đang' in t or 'dang' in t %}warn{% endif %}">{{ t }}</span>
-          </td>
+          <td>{{ r.tinh_trang or '' }}</td>
           <td>
             <a class="btn small" href="{{ url_for('congvan_edit', id=r.id) }}">Sửa</a>
             <form method="post" action="{{ url_for('congvan_delete', id=r.id) }}" style="display:inline" onsubmit="return confirm('Xoá công văn?')">
@@ -228,8 +175,8 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="12" style="color:var(--muted)">Không có dữ liệu.</td></tr>
-        {% endfor %}
+        <tr><td colspan="12" class="muted">Không có dữ liệu.</td></tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
@@ -243,16 +190,5 @@
   {% endif %}
 </div>
 {% endif %}
-
-<script>
-  function toggleList(id, btn){
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.classList.toggle('open');
-    const opened = el.classList.contains('open');
-    const base = btn.dataset.label || 'Xem tất cả';
-    btn.textContent = opened ? 'Thu gọn' : base;
-  }
-</script>
 
 {% endblock %}
