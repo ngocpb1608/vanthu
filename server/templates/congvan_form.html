@@ -1,34 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h2 class="heading">{{ 'Thêm công văn' if mode=='new' else 'Sửa công văn' }}</h2>
 
-<form method="post" class="card" style="display:grid;gap:12px;grid-template-columns:repeat(6,1fr)">
-  <div class="field col-2"><label>Loại đơn thư</label>
-    <input name="loai_don_thu" class="ipt" value="{{ r.loai_don_thu if mode=='edit' else '' }}">
-  </div>
-  <div class="field"><label>Tháng</label>
-    <input name="thang" type="number" min="1" max="12" class="ipt" value="{{ default_thang if mode=='new' else (r.thang or '') }}">
-  </div>
-  <div class="field"><label>Năm</label>
-    <input name="nam" type="number" min="2000" max="2100" class="ipt" value="{{ default_nam if mode=='new' else (r.nam or '') }}">
-  </div>
-  <div class="field"><label>Mã KH</label>
-    <input name="ma_kh" class="ipt" value="{{ r.ma_kh if mode=='edit' else '' }}">
-  </div>
-  <div class="field col-2"><label>Tên KH</label>
-    <input name="ten" class="ipt" value="{{ r.ten if mode=='edit' else '' }}">
-  </div>
-  <div class="field col-3"><label>Địa chỉ</label>
-    <input name="dia_chi" class="ipt" value="{{ r.dia_chi if mode=='edit' else '' }}">
-  </div>
-  <div class="field"><label>Nhân viên</label>
-    <input name="nhan_vien" class="ipt" value="{{ r.nhan_vien if mode=='edit' else '' }}" placeholder="NV01/NV02...">
-  </div>
-  <div class="field col-3"><label>Ngày NV nhận (YYYY-MM-DD)</label>
-    <input name="ngay_nv_nhan" class="ipt" value="{{ r.ngay_nv_nhan if mode=='edit' else '' }}">
+<form method="post"
+      action="{% if mode=='new' %}{{ url_for('congvan_new') }}{% else %}{{ url_for('congvan_edit', id=r.id) }}{% endif %}"
+      class="card"
+      style="display:grid;gap:14px;grid-template-columns:repeat(12,1fr)">
+
+  <!-- Nhóm 1: Phân loại & thời gian -->
+  <div style="grid-column:span 4">
+    <label>Loại đơn thư</label>
+    <input name="loai_don_thu" class="ipt" value="{{ r.loai_don_thu if mode=='edit' else '' }}" placeholder="Khiếu nại / Yêu cầu …">
   </div>
 
-  <div class="field col-3"><label>Tình trạng xử lý</label>
+  <div style="grid-column:span 2">
+    <label>Tháng</label>
+    <input name="thang" class="ipt" type="number" min="1" max="12"
+           value="{{ default_thang if mode=='new' else (r.thang or '') }}">
+  </div>
+
+  <div style="grid-column:span 2">
+    <label>Năm</label>
+    <input name="nam" class="ipt" type="number" min="2000" max="2100"
+           value="{{ default_nam if mode=='new' else (r.nam or '') }}">
+  </div>
+
+  <div style="grid-column:span 4">
+    <label>Ngày NV nhận</label>
+    <input name="ngay_nv_nhan" class="ipt" type="date"
+           value="{{ r.ngay_nv_nhan if mode=='edit' else '' }}">
+  </div>
+
+  <!-- Nhóm 2: Thông tin KH -->
+  <div style="grid-column:span 3">
+    <label>Mã KH</label>
+    <input name="ma_kh" class="ipt" value="{{ r.ma_kh if mode=='edit' else '' }}" placeholder="VD: KH001">
+  </div>
+
+  <div style="grid-column:span 5">
+    <label>Tên KH</label>
+    <input name="ten" class="ipt" value="{{ r.ten if mode=='edit' else '' }}">
+  </div>
+
+  <div style="grid-column:span 4">
+    <label>Địa chỉ</label>
+    <input name="dia_chi" class="ipt" value="{{ r.dia_chi if mode=='edit' else '' }}">
+  </div>
+
+  <!-- Nhóm 3: Trạng thái & NV -->
+  <div style="grid-column:span 3">
+    <label>Nhân viên</label>
+    <input name="nhan_vien" class="ipt" value="{{ r.nhan_vien if mode=='edit' else '' }}" placeholder="NV01/NV02…">
+  </div>
+
+  <div style="grid-column:span 3">
+    <label>Tình trạng xử lý</label>
     <select name="tinh_trang" class="ipt" required>
       {% for s in STATUS_CHOICES %}
         <option value="{{ s }}"
@@ -38,19 +65,25 @@
     </select>
   </div>
 
-  <div class="field col-6"><label>Nội dung đơn</label>
-    <textarea name="noi_dung" class="ipt" rows="4">{{ r.noi_dung if mode=='edit' else '' }}</textarea>
-  </div>
-  <div class="field col-6"><label>Ghi chú</label>
-    <textarea name="ghi_chu" class="ipt" rows="3">{{ r.ghi_chu if mode=='edit' else '' }}</textarea>
-  </div>
-  <div class="field col-3"><label>Kết quả</label>
-    <input name="ket_qua" class="ipt" value="{{ r.ket_qua if mode=='edit' else '' }}">
+  <div style="grid-column:span 3">
+    <label>Kết quả</label>
+    <input name="ket_qua" class="ipt" value="{{ r.ket_qua if mode=='edit' else '' }}" placeholder="Chưa xử lý / Đã xử lý…">
   </div>
 
-  <div style="grid-column:1/-1;display:flex;gap:8px">
+  <div style="grid-column:span 12">
+    <label>Nội dung đơn</label>
+    <textarea name="noi_dung" class="ipt" rows="4" placeholder="Chi tiết nội dung…">{{ r.noi_dung if mode=='edit' else '' }}</textarea>
+  </div>
+
+  <div style="grid-column:span 12">
+    <label>Ghi chú</label>
+    <textarea name="ghi_chu" class="ipt" rows="3" placeholder="Ghi chú nội bộ (không bắt buộc)">{{ r.ghi_chu if mode=='edit' else '' }}</textarea>
+  </div>
+
+  <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:flex-start">
     <button class="btn brand" type="submit">{{ 'Lưu' if mode=='edit' else 'Thêm' }}</button>
-    <a class="btn" href="{{ url_for('dashboard') }}">Về trang chủ</a>
+    <a class="btn" href="{{ url_for('dashboard') }}">Huỷ</a>
   </div>
 </form>
+
 {% endblock %}
