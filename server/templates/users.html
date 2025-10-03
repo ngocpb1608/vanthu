@@ -1,42 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <h3 style="margin-top:0">Người dùng</h3>
-
-  <form method="post" action="{{ url_for('users_create') }}" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <input class="ipt" name="username" placeholder="Username">
-    <input class="ipt" name="password" placeholder="Mật khẩu">
-    <select class="ipt" name="role">
-      <option value="staff">staff</option>
-      <option value="admin">admin</option>
-    </select>
-    <button class="btn brand" type="submit">Tạo tài khoản</button>
-  </form>
-
-  <div style="overflow:auto;max-height:60vh;border:1px solid #e5e7eb;border-radius:12px">
-    <table>
-      <thead style="position:sticky;top:0;background:#fff"><tr><th>ID</th><th>Username</th><th>Role</th><th style="width:340px">Hành động</th></tr></thead>
-      <tbody>
+  <h3 class="heading">Người dùng</h3>
+  <div class="muted" style="margin-bottom:8px">Tạo mặc định đã có: admin/staff. Bạn có thể đặt lại mật khẩu.</div>
+  <table>
+    <thead><tr><th>Tên</th><th>Vai trò</th><th>Đặt lại mật khẩu</th></tr></thead>
+    <tbody>
       {% for u in users %}
-        <tr>
-          <td>{{ u.id }}</td>
-          <td>{{ u.username }}</td>
-          <td><span class="pill">{{ u.role }}</span></td>
-          <td>
-            <form method="post" action="{{ url_for('users_password', id=u.id) }}" style="display:inline-flex;gap:6px;align-items:center">
-              <input class="ipt" name="password" placeholder="Mật khẩu mới">
-              <button class="btn" type="submit">Đổi mật khẩu</button>
-            </form>
-            <form method="post" action="{{ url_for('users_delete', id=u.id) }}" style="display:inline" onsubmit="return confirm('Xoá tài khoản này?')">
-              <button class="btn" type="submit">Xoá</button>
-            </form>
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="4">Chưa có tài khoản.</td></tr>
+      <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.role }}</td>
+        <td>
+          <form method="post" action="{{ url_for('user_reset', uid=u.id) }}" style="display:flex; gap:6px">
+            <input class="ipt" type="text" name="new_password" placeholder="Mật khẩu mới">
+            <button class="btn small" type="submit">Cập nhật</button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    </tbody>
+  </table>
 </div>
 {% endblock %}
