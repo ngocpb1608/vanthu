@@ -300,5 +300,10 @@ def _ctx():
         return url_for("dashboard", **args)
     return dict(page_url=page_url, APP_NAME="Đơn thư đội 3", STATUS_CHOICES=STATUS_CHOICES)
 
+# --- Health check cho Render ---
+@app.get("/healthz")
+def healthz():
+    return "ok", 200
+
 if __name__ == "__main__":
     app.run(debug=True)
