@@ -1,4 +1,5 @@
 import os
+import unicodedata
 from io import BytesIO
 from datetime import datetime
 
@@ -36,7 +37,6 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(16), default="staff")  # admin | staff
-
     def set_password(self, raw): self.password_hash = generate_password_hash(raw)
     def check_password(self, raw): return check_password_hash(self.password_hash, raw)
 
@@ -50,9 +50,9 @@ class CongVan(db.Model):
     dia_chi = db.Column(db.String(255))
     nhan_vien = db.Column(db.String(64))
     noi_dung = db.Column(db.Text)
-    ngay_nv_nhan = db.Column(db.String(20))  # để nguyên chuỗi (YYYY-MM-DD)
+    ngay_nv_nhan = db.Column(db.String(20))  # YYYY-MM-DD (chuỗi)
     tinh_trang = db.Column(db.String(120))
-    ghi_chu = db.Column(db.Text)            # <-- Ghi chú (mới)
+    ghi_chu = db.Column(db.Text)
     ket_qua = db.Column(db.String(120))
 
 @login_manager.user_loader
@@ -105,6 +105,27 @@ def apply_filters(q):
     if keyword:    q = q.filter(CongVan.noi_dung.ilike(f"%{keyword}%"))
     return q
 
+# ---- Chuẩn hoá tiếng Việt (bỏ dấu, lower, gọn khoảng trắng) ----
+def vn_norm(s: str) -> str:
+    if not s: return ""
+    s = unicodedata.normalize("NFD", s)
+    s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
+    s = s.lower().strip()
+    s = " ".join(s.split())
+    return s
+
+def is_chua_lay(s: str) -> bool:
+    v = vn_norm(s)
+    return ("chua lay" in v) or ("nv chua lay" in v)
+
+def is_dang_gq(s: str) -> bool:
+    v = vn_norm(s)
+    return ("dang giai quyet" in v) or ("dang xu ly" in v)
+
+def is_hoan_thanh(s: str) -> bool:
+    v = vn_norm(s)
+    return ("hoan thanh" in v) or ("da hoan thanh" in v) or ("hoan tat" in v)
+
 # ================= Auth =================
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -128,48 +149,36 @@ def logout():
 @app.route("/")
 @login_required
 def dashboard():
-    # NV chưa lấy
-    chua_lay = (CongVan.query
-        .filter(_ilike_any(CongVan.tinh_trang, [
-            "nv chưa lấy", "nv chưa lấy đơn", "chưa lấy", "chua lay"
-        ]))
-        .order_by(CongVan.id.desc()).all())
+    # Lấy toàn bộ để phân loại robust bằng Python (tránh miss do khác chính tả/dấu)
+    all_rows = CongVan.query.order_by(CongVan.id.desc()).all()
 
-    # Đang giải quyết (chi tiết)
-    dang_giai_quyet = (CongVan.query
-        .filter(_ilike_any(CongVan.tinh_trang, [
-            "đang giải quyết", "dang giai quyet", "đang xử lý", "dang xu ly"
-        ]))
-        .order_by(CongVan.id.desc()).all())
+    chua_lay = [r for r in all_rows if is_chua_lay(r.tinh_trang)]
+    dang_giai_quyet = [r for r in all_rows if is_dang_gq(r.tinh_trang)]
 
-    # Hoàn thành theo loại – tháng gần nhất
-    latest = (db.session.query(CongVan.nam, CongVan.thang)
-        .filter(_ilike_any(CongVan.tinh_trang, ["hoàn thành", "hoan thanh"]))
-        .order_by(CongVan.nam.desc(), CongVan.thang.desc()).first())
-
-    latest_nam = latest_thang = None
+    # Hoàn thành theo loại – xác định tháng gần nhất có "hoàn thành"
+    completed = [r for r in all_rows if is_hoan_thanh(r.tinh_trang) and r.thang and r.nam]
+    latest_thang = latest_nam = None
     hoan_thanh_by_loai = []
     month_total = month_completed = 0
-    if latest:
-        latest_nam, latest_thang = latest
-        base_month_q = CongVan.query.filter(
-            CongVan.nam == latest_nam, CongVan.thang == latest_thang)
-        month_total = base_month_q.count()
-        month_completed = base_month_q.filter(
-            _ilike_any(CongVan.tinh_trang, ["hoàn thành", "hoan thanh"])
-        ).count()
-        hoan_thanh_by_loai = (db.session.query(
-                CongVan.loai_don_thu, func.count(CongVan.id))
-            .filter(
-                CongVan.nam == latest_nam,
-                CongVan.thang == latest_thang,
-                _ilike_any(CongVan.tinh_trang, ["hoàn thành", "hoan thanh"])
-            )
-            .group_by(CongVan.loai_don_thu)
-            .order_by(CongVan.loai_don_thu.asc())
-            .all())
 
-    # Bảng (admin xem)
+    if completed:
+        # tìm (nam, thang) lớn nhất
+        latest_nam, latest_thang = max(((r.nam, r.thang) for r in completed))
+        # tổng tất cả đơn của tháng đó
+        month_rows = [r for r in all_rows if r.nam == latest_nam and r.thang == latest_thang]
+        month_total = len(month_rows)
+        # số hoàn thành trong tháng đó
+        month_completed = sum(1 for r in month_rows if is_hoan_thanh(r.tinh_trang))
+        # nhóm theo loại
+        counter = {}
+        for r in month_rows:
+            if is_hoan_thanh(r.tinh_trang):
+                key = (r.loai_don_thu or "(không ghi)")
+                counter[key] = counter.get(key, 0) + 1
+        # sắp xếp theo tên loại
+        hoan_thanh_by_loai = sorted(counter.items(), key=lambda x: x[0])
+
+    # Bảng (admin xem); dữ liệu lọc theo tham số
     loai_options = [r[0] for r in db.session.query(CongVan.loai_don_thu).distinct().all() if r[0]]
     q = apply_filters(CongVan.query.order_by(CongVan.id.desc()))
     page = int(request.args.get("page", 1)); per_page = 20
@@ -178,12 +187,17 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
-        chua_lay=chua_lay, dang_giai_quyet=dang_giai_quyet,
-        latest_thang=latest_thang, latest_nam=latest_nam,
+        chua_lay=chua_lay,
+        dang_giai_quyet=dang_giai_quyet,
+        latest_thang=latest_thang,
+        latest_nam=latest_nam,
         hoan_thanh_by_loai=hoan_thanh_by_loai,
-        month_total=month_total, month_completed=month_completed,
-        items=items, pager=pager, STATUS_CHOICES=STATUS_CHOICES,
-        loai_options=loai_options, APP_NAME="Đơn thư đội 3"
+        month_total=month_total,
+        month_completed=month_completed,
+        items=items, pager=pager,
+        STATUS_CHOICES=STATUS_CHOICES,
+        loai_options=loai_options,
+        APP_NAME="Đơn thư đội 3"
     )
 
 # ================= CRUD Công văn =================
@@ -203,14 +217,12 @@ def congvan_new():
             noi_dung     = request.form.get("noi_dung") or None,
             ngay_nv_nhan = request.form.get("ngay_nv_nhan") or None,
             tinh_trang   = request.form.get("tinh_trang") or None,
-            ghi_chu      = request.form.get("ghi_chu") or None,   # <-- Ghi chú
+            ghi_chu      = request.form.get("ghi_chu") or None,
             ket_qua      = request.form.get("ket_qua") or None
         )
         db.session.add(r); db.session.commit()
         flash("Đã thêm công văn", "ok")
         return redirect(url_for("dashboard"))
-
-    # GET: mặc định tháng/năm hiện tại
     today = datetime.now()
     return render_template("congvan_form.html",
                            mode="new",
@@ -233,12 +245,11 @@ def congvan_edit(id):
         r.noi_dung     = request.form.get("noi_dung") or None
         r.ngay_nv_nhan = request.form.get("ngay_nv_nhan") or None
         r.tinh_trang   = request.form.get("tinh_trang") or None
-        r.ghi_chu      = request.form.get("ghi_chu") or None   # <-- Ghi chú
+        r.ghi_chu      = request.form.get("ghi_chu") or None
         r.ket_qua      = request.form.get("ket_qua") or None
         db.session.commit()
         flash("Đã cập nhật công văn", "ok")
         return redirect(url_for("congvan_detail", id=r.id))
-
     return render_template("congvan_form.html",
                            mode="edit", r=r,
                            default_thang=r.thang, default_nam=r.nam)
@@ -256,7 +267,6 @@ def congvan_delete(id):
 @app.route("/congvan/<int:id>")
 @login_required
 def congvan_detail(id):
-    # KHÔNG chặn staff nữa (chỉ chặn sửa/xoá ở template)
     r = CongVan.query.get_or_404(id)
     return render_template("congvan_detail.html", r=r)
 
@@ -266,7 +276,6 @@ def congvan_detail(id):
 def export_table():
     # Nếu muốn cấm staff export: uncomment
     # admin_required()
-
     q = apply_filters(CongVan.query.order_by(CongVan.id.desc()))
     rows = q.all()
 
@@ -275,7 +284,6 @@ def export_table():
     headers = ["STT","Tháng","Năm","Loại","Mã KH","Tên","Địa chỉ","Nội dung",
                "Nhân viên","Ngày nhận","Tình trạng","Kết quả","Ghi chú"]
     ws.append(headers)
-
     for r in rows:
         ws.append([
             r.id, r.thang, r.nam, r.loai_don_thu, r.ma_kh, r.ten, r.dia_chi,
@@ -299,33 +307,6 @@ def _ctx():
         args = request.args.to_dict(flat=True); args["page"] = p
         return url_for("dashboard", **args)
     return dict(page_url=page_url, APP_NAME="Đơn thư đội 3", STATUS_CHOICES=STATUS_CHOICES)
-
-# ========= QUẢN LÝ NGƯỜI DÙNG (ADMIN) =========
-@app.route("/users")
-@login_required
-def users():
-    admin_required()
-    all_users = User.query.order_by(User.username.asc()).all()
-    return render_template("users.html", users=all_users)
-
-@app.route("/users/<int:uid>/reset", methods=["POST"])
-@login_required
-def user_reset(uid):
-    admin_required()
-    u = User.query.get_or_404(uid)
-    new_pass = request.form.get("new_password", "").strip()
-    if not new_pass:
-        flash("Vui lòng nhập mật khẩu mới", "error")
-        return redirect(url_for("users"))
-    u.set_password(new_pass); db.session.commit()
-    flash(f"Đã đổi mật khẩu cho {u.username}", "ok")
-    return redirect(url_for("users"))
-
-
-# --- Health check cho Render ---
-@app.get("/healthz")
-def healthz():
-    return "ok", 200
 
 if __name__ == "__main__":
     app.run(debug=True)
