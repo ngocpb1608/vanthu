@@ -1,27 +1,7 @@
 services:
   - type: web
-    name: vanthu
+    name: congvan
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
-    envVars:
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: vanthu-db
-          property: connectionString
-      # Khuyến nghị: đặt sẵn tài khoản mặc định (có thể đổi trong Render sau)
-      - key: DEFAULT_ADMIN_USERNAME
-        value: admin
-      - key: DEFAULT_ADMIN_PASSWORD
-        value: admin123
-      - key: DEFAULT_STAFF_USERNAME
-        value: nhanvien
-      - key: DEFAULT_STAFF_PASSWORD
-        value: nhanvien123
-
-databases:
-  - name: vanthu-db
-    plan: free
+    startCommand: gunicorn server:app
+    healthCheckPath: /healthz
