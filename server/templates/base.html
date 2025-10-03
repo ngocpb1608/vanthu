@@ -47,6 +47,7 @@
         {% if current_user.is_authenticated %}
           {% if current_user.role == 'admin' %}
             <a href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+            <a href="{{ url_for('users') }}">👤 Quản lý tài khoản</a>
           {% endif %}
           <a href="{{ url_for('logout') }}">Đăng xuất</a>
         {% endif %}
