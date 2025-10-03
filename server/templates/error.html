@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card" style="text-align:center">
-  <h1 style="margin:6px 0">{{ code }}</h1>
-  <div class="pill" style="margin-bottom:10px">{{ msg }}</div>
-  <a class="btn" href="{{ url_for('dashboard') }}">Về trang chủ</a>
-  <div style="color:#94a3b8;margin-top:18px">Làm bằng Flask + giao diện nhẹ nhàng.</div>
+  <h1 style="font-size:40px;margin:10px 0">{{ code }}</h1>
+  <div class="muted" style="margin-bottom:12px">{{ msg }}</div>
+  <a class="btn brand" href="{{ url_for('dashboard') }}">Về trang chủ</a>
 </div>
 {% endblock %}
