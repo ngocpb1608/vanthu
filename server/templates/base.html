@@ -2,71 +2,60 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quản lý đơn thư - Đội 3</title>
+  <title>{{ APP_NAME }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     :root{
-      --bg:#f6f8fb; --card:#ffffff; --ring:#e6ebf3;
-      --brand:#5b8def; --brand-600:#3d6fe0;
-      --text:#2a2f3a; --muted:#6b7280;
-      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
-      --blue:#e7f2ff; --amber:#fff5e6;
+      --bg:#f6f9fb; --card:#ffffff; --brand:#22a6f2; --brand-weak:#e6f4ff;
+      --ring:#e2e8f0; --text:#334155; --muted:#6b7280;
+      --ok:#10b981; --warn:#f59e0b; --blue:#3b82f6; --rose:#ef4444;
+      --blue-weak:#dbeafe; --warn-weak:#fef3c7;
     }
-    html,body{background:var(--bg); color:var(--text); font:14px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial;}
-    a{color:var(--brand); text-decoration:none}
-    .wrap{max-width:1180px; margin:auto; padding:16px}
-    .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px}
-    .brand-title{font-weight:800; font-size:22px}
-    .btn{border:1px solid var(--ring); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer}
-    .btn:hover{border-color:#d7ddea}
-    .btn.brand{background:var(--brand); color:#fff; border-color:transparent}
-    .btn.brand:hover{background:var(--brand-600)}
-    .btn.small{padding:6px 10px; font-size:12px}
-    .card{background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:14px}
-    .heading{font-size:16px; font-weight:700; margin:0 0 10px}
-    .row{display:grid; gap:8px}
-    .row.cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}
-    .ipt{width:100%; border:1px solid var(--ring); padding:9px 10px; border-radius:10px; background:#fff}
-    table{width:100%; border-collapse:separate; border-spacing:0}
-    th,td{padding:10px 12px; border-bottom:1px solid var(--ring); vertical-align:top}
-    th{font-weight:700; text-align:left}
-    .chip{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--ring); border-radius:999px; padding:6px 10px; background:#fff}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui, -apple-system, Segoe UI, Roboto}
+    a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .topbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0 14px}
+    .title{font-weight:700;font-size:22px}
+    .nav a{padding:8px 10px;border-radius:10px;background:var(--brand-weak)}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:14px}
+    .heading{margin:0 0 10px;font-weight:700}
+    .row{display:grid;gap:10px}.cols-6{grid-template-columns:repeat(6,1fr)}
+    .ipt{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--ring);background:#fff}
+    .btn{border:1px solid var(--ring);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+    .btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.small{padding:6px 8px;font-size:13px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--ring);padding:8px 10px;text-align:left}
+    th{position:sticky;top:0;background:#f8fafc;z-index:1}
+    .chip{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--ring);background:#fff}
+    .stat-card{border-radius:12px;border:1px solid var(--ring);padding:10px}
+    .stat-blue{background:var(--blue-weak)} .stat-amber{background:var(--warn-weak)}
+    .stat-title{font-weight:700;margin-bottom:6px}
+    .num{font-size:26px;font-weight:800}
+    .list{max-height:240px;overflow:auto;border:1px solid var(--ring);border-radius:10px;background:#fff}
     .muted{color:var(--muted)}
-    .stat-card{border:1px solid var(--ring); border-radius:14px; padding:12px}
-    .stat-blue{background:var(--blue)}
-    .stat-amber{background:var(--amber)}
-    .stat-title{font-weight:700; margin-bottom:6px}
-    .num{font-weight:800; font-size:20px; margin-bottom:8px}
-    .list{overflow:auto; max-height:280px; border-radius:12px; background:#fff; border:1px solid var(--ring)}
-    .ok{background:#eafcf1}
-    .warn{background:#fff6e6}
+    .flash{margin:8px 0;padding:8px 12px;border:1px solid var(--ring);border-radius:10px;background:#fafcff}
+    @media (max-width:900px){.cols-6{grid-template-columns:1fr 1fr}}
+    @media (max-width:640px){.cols-6{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div>
-        <a class="brand-title" href="{{ url_for('dashboard') }}">📁 Quản lý công văn - Đội 3</a>
-        <div class="muted" style="font-size:12px">Designed by Mun</div>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap">
-        {% if current_user.is_authenticated and current_user.role == 'admin' %}
-          <a class="btn brand" href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
-          <a class="btn" href="{{ url_for('users') }}">Người dùng</a>
-        {% endif %}
+      <a href="{{ url_for('dashboard') }}" class="title">📂 {{ APP_NAME }}</a>
+      <div class="nav">
         {% if current_user.is_authenticated %}
-          <a class="btn" href="{{ url_for('logout') }}">Đăng xuất</a>
+          {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('congvan_new') }}">+ Thêm công văn</a>
+          {% endif %}
+          <a href="{{ url_for('logout') }}">Đăng xuất</a>
         {% endif %}
       </div>
     </div>
 
-    {% with msgs = get_flashed_messages(with_categories=true) %}
-      {% if msgs %}
-        <div style="margin-bottom:10px">
-          {% for cat,msg in msgs %}
-            <div class="card" style="border-color: {% if cat=='ok' %}#bbf7d0{% else %}#fecaca{% endif %}; background: {% if cat=='ok' %}#ecfdf5{% else %}#fff1f2{% endif %};">{{ msg }}</div>
-          {% endfor %}
-        </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat,msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
       {% endif %}
     {% endwith %}
 
