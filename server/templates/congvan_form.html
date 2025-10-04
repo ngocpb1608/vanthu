@@ -13,19 +13,16 @@
     <label>Loại đơn thư</label>
     <input name="loai_don_thu" class="ipt" value="{{ r.loai_don_thu if mode=='edit' else '' }}" placeholder="Khiếu nại / Yêu cầu …">
   </div>
-
   <div style="grid-column:span 2">
     <label>Tháng</label>
     <input name="thang" class="ipt" type="number" min="1" max="12"
            value="{{ default_thang if mode=='new' else (r.thang or '') }}">
   </div>
-
   <div style="grid-column:span 2">
     <label>Năm</label>
     <input name="nam" class="ipt" type="number" min="2000" max="2100"
            value="{{ default_nam if mode=='new' else (r.nam or '') }}">
   </div>
-
   <div style="grid-column:span 4">
     <label>Ngày NV nhận</label>
     <input name="ngay_nv_nhan" class="ipt" type="date"
@@ -37,12 +34,10 @@
     <label>Mã KH</label>
     <input name="ma_kh" class="ipt" value="{{ r.ma_kh if mode=='edit' else '' }}" placeholder="VD: KH001">
   </div>
-
   <div style="grid-column:span 5">
     <label>Tên KH</label>
     <input name="ten" class="ipt" value="{{ r.ten if mode=='edit' else '' }}">
   </div>
-
   <div style="grid-column:span 4">
     <label>Địa chỉ</label>
     <input name="dia_chi" class="ipt" value="{{ r.dia_chi if mode=='edit' else '' }}">
@@ -53,7 +48,6 @@
     <label>Nhân viên</label>
     <input name="nhan_vien" class="ipt" value="{{ r.nhan_vien if mode=='edit' else '' }}" placeholder="NV01/NV02…">
   </div>
-
   <div style="grid-column:span 3">
     <label>Tình trạng xử lý</label>
     <select name="tinh_trang" class="ipt" required>
@@ -64,7 +58,6 @@
       {% endfor %}
     </select>
   </div>
-
   <div style="grid-column:span 3">
     <label>Kết quả</label>
     <input name="ket_qua" class="ipt" value="{{ r.ket_qua if mode=='edit' else '' }}" placeholder="Chưa xử lý / Đã xử lý…">
@@ -74,7 +67,6 @@
     <label>Nội dung đơn</label>
     <textarea name="noi_dung" class="ipt" rows="4" placeholder="Chi tiết nội dung…">{{ r.noi_dung if mode=='edit' else '' }}</textarea>
   </div>
-
   <div style="grid-column:span 12">
     <label>Ghi chú</label>
     <textarea name="ghi_chu" class="ipt" rows="3" placeholder="Ghi chú nội bộ (không bắt buộc)">{{ r.ghi_chu if mode=='edit' else '' }}</textarea>
