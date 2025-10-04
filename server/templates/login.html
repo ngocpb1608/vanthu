@@ -4,9 +4,9 @@
   <h3 class="heading">Đăng nhập</h3>
   <form method="post" class="row cols-6">
     <input class="ipt" name="username" placeholder="Tài khoản" style="grid-column:span 6">
-    <div style="grid-column:span 6; display:flex; gap:8px">
+    <div style="grid-column:span 6; display:flex; gap:8px; align-items:center">
       <input class="ipt" id="pw" name="password" type="password" placeholder="Mật khẩu" style="flex:1">
-      <button type="button" class="btn" onclick="togglePw()">👁</button>
+      <button type="button" class="btn" id="pwbtn" onclick="togglePw()" aria-label="Hiện/Ẩn mật khẩu">🔒 Hiện</button>
     </div>
     <div style="grid-column:span 6; display:flex; gap:8px; margin-top:6px">
       <button class="btn brand" type="submit">Đăng nhập</button>
@@ -15,6 +15,11 @@
   </form>
 </div>
 <script>
-function togglePw(){ const i=document.getElementById('pw'); i.type = i.type==='password'?'text':'password'; }
+function togglePw(){
+  const i=document.getElementById('pw'); const b=document.getElementById('pwbtn');
+  const show = i.type==='password';
+  i.type = show ? 'text' : 'password';
+  b.textContent = show ? '🔓 Ẩn' : '🔒 Hiện';
+}
 </script>
 {% endblock %}
