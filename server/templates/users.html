@@ -3,6 +3,7 @@
 <div class="card">
   <h3 class="heading">Tài khoản người dùng</h3>
 
+  <!-- Tạo tài khoản mới -->
   <form method="post" action="{{ url_for('users_create') }}" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
     <input class="ipt" name="username" placeholder="Username" required>
     <input class="ipt" name="password" placeholder="Mật khẩu ban đầu" required>
@@ -13,6 +14,7 @@
     <button class="btn brand" type="submit">+ Tạo tài khoản</button>
   </form>
 
+  <!-- Danh sách & chỉnh sửa inline -->
   <div style="overflow:auto; max-height:60vh; border:1px solid var(--ring); border-radius:12px">
     <table>
       <thead><tr><th>ID</th><th>Username</th><th>Vai trò</th><th>Hành động</th></tr></thead>
@@ -20,7 +22,16 @@
         {% for u in users %}
         <tr>
           <td>{{ u.id }}</td>
-          <td>{{ u.username }}</td>
+          <td>
+            <form method="post" action="{{ url_for('users_update', uid=u.id) }}" style="display:flex;gap:8px;align-items:center">
+              <input class="ipt" name="username" value="{{ u.username }}" style="min-width:180px">
+              <select class="ipt" name="role">
+                <option value="staff" {% if u.role=='staff' %}selected{% endif %}>staff</option>
+                <option value="admin" {% if u.role=='admin' %}selected{% endif %}>admin</option>
+              </select>
+              <button class="btn small" type="submit">Lưu</button>
+            </form>
+          </td>
           <td>{{ u.role }}</td>
           <td style="white-space:nowrap">
             <form method="post" action="{{ url_for('reset_password', uid=u.id) }}" style="display:inline">
