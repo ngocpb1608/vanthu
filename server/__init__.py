@@ -36,6 +36,7 @@ login_manager.login_view = "login"
 APP_NAME = "Quản lý đơn thư đội 3"
 STATUS_CHOICES = ["NV chưa lấy đơn", "Đang giải quyết", "Hoàn Thành"]
 CHUA_LAY, DANG_GQ, HOAN_T = STATUS_CHOICES
+VALID_ROLES = {"admin", "staff"}
 
 # ========= Models =========
 class User(UserMixin, db.Model):
@@ -129,6 +130,9 @@ def login():
 @app.get("/quick_login")
 def quick_login():
     u = User.query.filter_by(role="staff").first()
+    if not u:
+        flash("Chưa có tài khoản staff","error")
+        return redirect(url_for("login"))
     login_user(u); return redirect(url_for("dashboard"))
 
 @app.get("/logout")
@@ -258,7 +262,8 @@ def users_create():
     admin_required()
     username = request.form.get("username","").strip()
     password = request.form.get("password","").strip()
-    role = request.form.get("role","staff")
+    role = request.form.get("role","staff").strip()
+    if role not in VALID_ROLES: role = "staff"
     if not username or not password:
         flash("Thiếu username/password","error"); return redirect(url_for("users"))
     if User.query.filter_by(username=username).first():
@@ -277,6 +282,27 @@ def reset_password(uid):
     u.set_password(new_pw)
     db.session.commit()
     flash(f"Đã đặt lại mật khẩu cho '{u.username}'. Mật khẩu mới: {new_pw}", "ok")
+    return redirect(url_for("users"))
+
+@app.post("/users/<int:uid>/update")
+@login_required
+def users_update(uid):
+    admin_required()
+    u = User.query.get_or_404(uid)
+    new_username = request.form.get("username","").strip()
+    new_role = request.form.get("role","").strip()
+    if new_role not in VALID_ROLES:
+        flash("Vai trò không hợp lệ","error"); return redirect(url_for("users"))
+    if not new_username:
+        flash("Username không được rỗng","error"); return redirect(url_for("users"))
+    # check trùng (trừ chính mình)
+    existed = User.query.filter(User.username==new_username, User.id!=u.id).first()
+    if existed:
+        flash("Username đã được dùng","error"); return redirect(url_for("users"))
+    u.username = new_username
+    u.role = new_role
+    db.session.commit()
+    flash("Đã cập nhật người dùng","ok")
     return redirect(url_for("users"))
 
 @app.post("/users/<int:uid>/delete")
